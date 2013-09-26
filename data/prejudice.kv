@@ -1,0 +1,263 @@
+#:kivy 1.7.2
+#:set color_red  [1, 137 / 255., 128 / 255., 1.]
+#:set color_gray [99 / 255., 99 / 255., 101 / 255., 1.]
+#:set color_white [1, 1, 1, 1]
+#:set color_blue [0, 218 / 255., 209 / 255., 1.]
+
+<CropCenterImage>:
+	canvas.before:
+		StencilPush
+		Rectangle:
+			pos: self.pos
+			size: self.size
+		StencilUse
+	canvas.after:
+		StencilPop
+
+<Touch>
+    canvas:
+        Color:
+            rgb: 1, 1, 1
+        Ellipse:
+            pos: self.x - dp(15), self.y - dp(15)
+            size: dp(30), dp(30)
+        Color:
+            rgba: color_red
+        Ellipse:
+            pos: self.x - dp(13), self.y - dp(13)
+            size: dp(26), dp(26)
+
+<ButtonChoice>:
+    text: ''
+    on_press: self.step.choice(self.index, self.last_touch)
+    background_color: color_gray
+	background_normal: ''
+	background_down: ''
+
+    Image:
+        size: root.width * root.scale, root.height * root.scale
+        x: root.center_x - self.width / 2.
+        y: root.center_y - self.height / 2.
+        source: root.source
+
+
+<StartStep@Screen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Ceci n\'est pas un Quizz'
+            font_size: '24sp'
+
+        Label:
+            text: 'Toucher l\'image qui vous inspire le plus'
+
+        AnchorLayout:
+
+            Button:
+                text: 'Commencer'
+                size_hint: None, None
+                size: '200dp', '48dp'
+                on_release: app.do_next_step()
+
+<Step>:
+    BoxLayout:
+        orientation: 'vertical'
+
+		# toolbar
+		BoxLayout:
+			size_hint_y: None
+			height: '48dp'
+			canvas.before:
+				Color:
+					rgba: color_red
+				Rectangle:
+					pos: self.pos
+					size: self.size
+
+			Image:
+				source: 'data/logo.png'
+				size_hint_x: None
+				width: self.height * self.image_ratio
+
+			Label:
+				text: 'Apriori'
+				font_size: '24dp'
+				font_name: 'data/dosis.light.ttf'
+				color: color_white
+				size_hint_x: None
+				width: self.texture_size[0] + sp(20)
+
+		BoxLayout:
+			orientation: 'horizontal' if root.width > root.height else 'vertical'
+
+            CropCenterImage:
+                source: root.baseimg
+
+			BoxLayout:
+				orientation: 'vertical'
+				padding: '5dp'
+
+				# timer trick!
+				RelativeLayout:
+					size_hint_y: None
+					height: '30dp'
+
+					Label:
+						text: 'TEMPS RESTANT'
+						font_name: 'data/dosis.semibold.ttf'
+						text_size: self.width - sp(11), None
+						size_hint_y: None
+						height: '30dp'
+						pos_hint: {'center_y': .5}
+						canvas.before:
+							Color:
+								rgba: color_gray
+							Rectangle:
+								pos: self.pos
+								size: self.size
+
+					Label:
+						text: 'TEMPS RESTANT'
+						font_name: 'data/dosis.semibold.ttf'
+						text_size: self.width - sp(11), None
+						color: 0, 0, 0, 1
+						size_hint_y: None
+						height: '24dp'
+						pos_hint: {'center_y': .5}
+						canvas.before:
+							StencilPush
+							Rectangle:
+								pos: self.x + dp(3), self.y
+								size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
+							StencilUse
+							Color:
+								rgba: color_red
+							Rectangle:
+								pos: self.pos
+								size: self.width / 2., self.height
+							Color:
+								rgba: color_blue
+							Rectangle:
+								pos: self.x + self.width / 2., self.y
+								size: self.width / 2., self.height
+						canvas.after:
+							StencilPop
+
+
+				Widget:
+					size_hint_y: None
+					height: '5dp'
+
+				BoxLayout:
+					orientation: 'horizontal'
+						
+					GridLayout:
+						cols: 2
+						spacing: '10dp'
+
+						ButtonChoice:
+							index: 1
+							step: root
+							source: root.img1
+							scale: root.scale1
+
+						ButtonChoice:
+							index: 2
+							step: root
+							source: root.img2
+							scale: root.scale2
+
+						ButtonChoice:
+							index: 3
+							step: root
+							source: root.img3
+							scale: root.scale3
+
+						ButtonChoice:
+							index: 4
+							step: root
+							source: root.img4
+							scale: root.scale4
+
+<Step1@Step>:
+    sid: '1'
+    baseimg: 'bouchon/bouchon.jpg'
+    img1: 'bouchon/picto1_chemise.png'
+    img2: 'bouchon/picto1_lac.png'
+    img3: 'bouchon/picto1_pocket.png'
+    img4: 'bouchon/picto1_voiture.png'
+
+<Step2@Step>:
+    sid: '2'
+    baseimg: 'bouchon/bouchon.jpg'
+    img1: 'bouchon/picto2_fish.png'
+    img2: 'bouchon/picto2_leviervitesse.png'
+    img3: 'bouchon/picto2_trombonne.png'
+    img4: 'bouchon/picto2_zipper.png'
+
+<Step3End@Screen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            orientation: 'horizontal'
+            BoxLayout:
+                orientation: 'vertical'
+                Image:
+                    source: 'bouchon/answer.png'
+                Label:
+                    size_hint_y: None
+                    height: '48dp'
+                    text: 'Cet objet est un tire-bouton'
+
+            Image:
+                source: 'bouchon/dataviz.jpg'
+
+        AnchorLayout:
+            size_hint_y: .1
+            Button:
+                text: 'Recommencer'
+                size_hint: None, None
+                size: '200dp', '48dp'
+                on_release: app.start_quizz()
+
+
+<HomeButton@Button>:
+	background_normal: ''
+	background_down: ''
+	background_color: color_red[:3] + [1. if self.state == 'normal' else .7]
+	color: 1, 1, 1, 1
+	size_hint_y: None
+	height: '80dp'
+	font_size: '20sp'
+	font_name: 'data/dosis.semibold.ttf'
+
+<Home>:
+	canvas.before:
+		Color:
+			rgba: color_gray
+		Rectangle:
+			size: self.size
+
+	BoxLayout:
+		orientation: 'vertical'
+		Image:
+			source: 'data/presplash.png'
+
+		GridLayout:
+			cols: 2 if root.width > root.height else 1
+			spacing: 1
+			size_hint_y: None
+			height: self.minimum_height
+
+			HomeButton:
+				text: 'DÉMARRER LE QUIZZ'
+				on_release: app.start_quizz()
+
+			HomeButton:
+				text: 'AJOUTER UN QUIZZ'
+
+			HomeButton:
+				text: 'STATISTIQUES PERSONNELS'
+
+			HomeButton:
+				text: 'LE PROJET'

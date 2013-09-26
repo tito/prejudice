@@ -1,156 +1,38 @@
 from kivy.app import App
 from kivy.properties import StringProperty, ListProperty, \
-        NumericProperty, ObjectProperty, BooleanProperty
+        NumericProperty, ObjectProperty, BooleanProperty, \
+        AliasProperty
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.button import Button
-from kivy.lang import Builder
-from kivy.factory import Factory
 from kivy.uix.widget import Widget
+from kivy.uix.image import Image
 from kivy.clock import Clock
 from os.path import join, exists
 import json
 
-Builder.load_string('''
 
-<Touch>
-    canvas:
-        Color:
-            rgba: 0, 1, 1, .7
-        Ellipse:
-            pos: self.x - dp(10), self.y - dp(10)
-            size: dp(20), dp(20)
+class CropCenterImage(Image):
 
-<ButtonChoice>:
-    text: ''
-    on_press: self.step.choice(self.index, self.last_touch)
-    background_color: (0, 0, 0, 0)
+    # redefine norm_image_size to implement a "crop center" approach
+    # XXX move that into kivy.uix.image itself, with a new "allow_crop" property
 
-    Image:
-        size: root.width * root.scale, root.height * root.scale
-        x: root.center_x - self.width / 2.
-        y: root.center_y - self.height / 2.
-        source: root.source
+    def get_norm_image_size(self):
+        if not self.texture:
+            return self.size
+        ratio = self.image_ratio
+        w, h = self.size
+        tw, th = self.texture.size
 
-        canvas.before:
-            Color:
-                rgb: 1, 1, 1
-            Rectangle:
-                pos: self.x - dp(10), self.y - dp(10)
-                size: self.width + dp(20), self.height + dp(20)
+        iw = w
+        ih = iw / ratio
+        if ih < h:
+            ih = h
+            iw = ih * ratio
+        return iw, ih
 
-<StartStep@Screen>:
-    BoxLayout:
-        orientation: 'vertical'
-        Label:
-            text: 'Ceci n\\'est pas un Quizz'
-            font_size: '24sp'
+    norm_image_size = AliasProperty(get_norm_image_size, None, bind=(
+        'texture', 'size', 'image_ratio', 'allow_stretch'))
 
-        Label:
-            text: 'Toucher l\\'image qui vous inspire le plus'
-
-        AnchorLayout:
-
-            Button:
-                text: 'Commencer'
-                size_hint: None, None
-                size: '200dp', '48dp'
-                on_release: app.do_next_step()
-
-<Step>:
-    BoxLayout:
-        orientation: 'vertical'
-        spacing: '10dp'
-        padding: '10dp'
-
-        Label:
-            size_hint_y: None
-            height: '22dp'
-            text: str(int(root.timer))
-            canvas.before:
-                Color:
-                    rgb: .5, .5, .5
-                Rectangle:
-                    pos: self.pos
-                    size: self.width * (20 - root.timer) / 20., self.height
-
-
-        BoxLayout:
-            orientation: 'horizontal'
-                
-            Image:
-                source: root.baseimg
-
-            GridLayout:
-                cols: 2
-                spacing: '10dp'
-
-                ButtonChoice:
-                    index: 1
-                    step: root
-                    source: root.img1
-                    scale: root.scale1
-
-                ButtonChoice:
-                    index: 2
-                    step: root
-                    source: root.img2
-                    scale: root.scale2
-
-                ButtonChoice:
-                    index: 3
-                    step: root
-                    source: root.img3
-                    scale: root.scale3
-
-                ButtonChoice:
-                    index: 4
-                    step: root
-                    source: root.img4
-                    scale: root.scale4
-
-<Step1@Step>:
-    sid: '1'
-    baseimg: 'bouchon/bouchon.jpg'
-    img1: 'bouchon/picto1_chemise.png'
-    img2: 'bouchon/picto1_lac.png'
-    img3: 'bouchon/picto1_pocket.png'
-    img4: 'bouchon/picto1_voiture.png'
-
-<Step2@Step>:
-    sid: '2'
-    baseimg: 'bouchon/bouchon.jpg'
-    img1: 'bouchon/picto2_fish.png'
-    img2: 'bouchon/picto2_leviervitesse.png'
-    img3: 'bouchon/picto2_trombonne.png'
-    img4: 'bouchon/picto2_zipper.png'
-
-<Step3End@Screen>:
-    BoxLayout:
-        orientation: 'vertical'
-        BoxLayout:
-            orientation: 'horizontal'
-            BoxLayout:
-                orientation: 'vertical'
-                Image:
-                    source: 'bouchon/answer.png'
-                Label:
-                    size_hint_y: None
-                    height: '48dp'
-                    text: 'Cet objet est un tire-bouton'
-
-            Image:
-                source: 'bouchon/dataviz.jpg'
-
-        AnchorLayout:
-            size_hint_y: .1
-            Button:
-                text: 'Recommencer'
-                size_hint: None, None
-                size: '200dp', '48dp'
-                on_release: app.restart()
-
-
-''')
 
 class Touch(Widget):
     touch = ObjectProperty()
@@ -274,18 +156,26 @@ class Step(Screen):
                 return
 
 
+class Home(Screen):
+    pass
+
+
 class Prejudice(App):
 
     def build(self):
-        self.steps = [Factory.StartStep, Factory.Step1, Factory.Step2, Factory.Step3End]
-        self.count = 0
-        self.stepindex = -1
         self.sm = ScreenManager(transition=SlideTransition(
-            direction='down', duration=.4))
-        self.restart()
+            direction='left', duration=.4))
+        self.sm.add_widget(Home(name='home'))
+        self.start_quizz()
         return self.sm
 
-    def restart(self):
+    def start_quizz(self):
+        from kivy.factory import Factory
+        self.steps = [
+                #Factory.StartStep, 
+                Factory.Step1, Factory.Step2, Factory.Step3End]
+        self.count = 0
+        self.stepindex = -1
         self.userevents = {}
         self.events = {}
         self.events_fn = join(self.user_data_dir, 'bouchon.json')
@@ -349,4 +239,4 @@ class Prejudice(App):
 
 
 if __name__ == '__main__':
-    Prejudice().run()
+    Prejudice(kv_directory='data').run()
