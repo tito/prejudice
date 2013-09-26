@@ -12,6 +12,10 @@
 			size: self.size
 		StencilUse
 	canvas.after:
+		StencilUnUse
+		Rectangle:
+			pos: self.pos
+			size: self.size
 		StencilPop
 
 <Touch>
@@ -60,39 +64,16 @@
                 on_release: app.do_next_step()
 
 <Step>:
-    BoxLayout:
-        orientation: 'vertical'
+	BoxLayout:
+		size_hint_y: None
+		height: root.height - dp(48)
+		orientation: 'horizontal' if root.width > root.height else 'vertical'
 
-		# toolbar
-		BoxLayout:
-			size_hint_y: None
-			height: '48dp'
-			canvas.before:
-				Color:
-					rgba: color_red
-				Rectangle:
-					pos: self.pos
-					size: self.size
+		CropCenterImage:
+			source: root.baseimg
 
-			Image:
-				source: 'data/logo.png'
-				size_hint_x: None
-				width: self.height * self.image_ratio
-
-			Label:
-				text: 'Apriori'
-				font_size: '24dp'
-				font_name: 'data/dosis.light.ttf'
-				color: color_white
-				size_hint_x: None
-				width: self.texture_size[0] + sp(20)
-
-		BoxLayout:
-			orientation: 'horizontal' if root.width > root.height else 'vertical'
-
-            CropCenterImage:
-                source: root.baseimg
-
+		RelativeLayout:
+			id: content
 			BoxLayout:
 				orientation: 'vertical'
 				padding: '5dp'
@@ -141,6 +122,10 @@
 								pos: self.x + self.width / 2., self.y
 								size: self.width / 2., self.height
 						canvas.after:
+							StencilUnUse
+							Rectangle:
+								pos: self.x + dp(3), self.y
+								size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
 							StencilPop
 
 
@@ -178,6 +163,33 @@
 							step: root
 							source: root.img4
 							scale: root.scale4
+
+	# real toolbar, above everything
+	BoxLayout:
+		top: root.height
+		size_hint_y: None
+		height: '48dp'
+
+		canvas.before:
+			Color:
+				rgba: color_red
+			Rectangle:
+				pos: self.pos
+				size: self.size
+
+		Image:
+			source: 'data/logo.png'
+			size_hint_x: None
+			width: self.height * self.image_ratio
+
+		Label:
+			text: 'Apriori'
+			font_size: '24dp'
+			font_name: 'data/dosis.light.ttf'
+			color: color_white
+			size_hint_x: None
+			width: self.texture_size[0] + sp(20)
+
 
 <Step1@Step>:
     sid: '1'
@@ -261,3 +273,91 @@
 
 			HomeButton:
 				text: 'LE PROJET'
+
+<AnswerDescription>:
+	size_hint_y: None
+	canvas:
+		Color:
+			rgba: 0, 0, 0, 1
+		Rectangle:
+			size: self.size
+
+	BoxLayout:
+		orientation: 'vertical'
+		padding: '10dp'
+
+		BoxLayout:
+			padding: '10dp'
+			spacing: '10dp'
+			size_hint_y: None
+			height: '96dp'
+
+			Image:
+				allow_stretch: True
+				source: root.img
+				size_hint_x: None
+				width: self.height
+
+			Label:
+				text: root.title
+				font_name: 'data/dosis.light.ttf'
+				font_size: '24sp'
+
+		Label:
+			text: root.description
+			text_size: self.width + 1, None
+			font_name: 'data/dosis.light.ttf'
+
+<AnswerDetails>:
+	canvas:
+		Color:
+			rgba: color_gray
+		Rectangle:
+			size: self.size
+
+	size_hint_y: None
+	height: '128dp'
+
+	BoxLayout:
+		padding: '10dp'
+		spacing: '10dp'
+		BoxLayout:
+			orientation: 'vertical'
+			Label:
+				text: 'Vous avez répondu'
+				font_name: 'data/dosis.light.ttf'
+				text_size: self.width, None
+				height: '20dp'
+				size_hint_y: None
+
+			BoxLayout:
+				spacing: '2dp'
+				Image:
+					source: root.order_user[0]
+				Image:
+					source: root.order_user[1]
+				Image:
+					source: root.order_user[2]
+				Image:
+					source: root.order_user[3]
+
+		BoxLayout:
+			orientation: 'vertical'
+			Label:
+				text: 'Les autres ont répondu'
+				font_name: 'data/dosis.light.ttf'
+				text_size: self.width, None
+				height: '20dp'
+				size_hint_y: None
+
+			BoxLayout:
+				spacing: '2dp'
+				Image:
+					source: root.order_all[0]
+				Image:
+					source: root.order_all[1]
+				Image:
+					source: root.order_all[2]
+				Image:
+					source: root.order_all[3]
+

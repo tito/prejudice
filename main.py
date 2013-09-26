@@ -1,3 +1,5 @@
+#: -*- coding: utf-8 -*-
+
 from kivy.app import App
 from kivy.properties import StringProperty, ListProperty, \
         NumericProperty, ObjectProperty, BooleanProperty, \
@@ -6,6 +8,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.clock import Clock
 from os.path import join, exists
 import json
@@ -48,6 +51,17 @@ class ButtonChoice(Button):
         self.last_touch = touch
         return super(ButtonChoice, self).on_touch_down(touch)
 
+class AnswerDescription(RelativeLayout):
+    title = StringProperty()
+    description = StringProperty()
+    img = StringProperty()
+
+class AnswerDetails(RelativeLayout):
+    order_user = ListProperty(['', '', '', ''])
+    order_all  = ListProperty(['', '', '', ''])
+
+
+
 class Step(Screen):
     sid = StringProperty()
     baseimg = StringProperty()
@@ -71,6 +85,7 @@ class Step(Screen):
     timer = NumericProperty(20)
     do_replay = BooleanProperty(False)
     last_index = NumericProperty(0)
+    done = BooleanProperty(False)
 
 
     choices = ListProperty([])
@@ -100,11 +115,45 @@ class Step(Screen):
             self.dispatch('on_step_done')
 
     def on_step_done(self):
+        self.done = True
         Clock.unschedule(self._reduce_timer)
-        app = App.get_running_app()
-        app.do_next_step()
+        #app = App.get_running_app()
+        #app.do_next_step()
+        self.show_answer()
+
+    def show_answer(self):
+        self.answer_desc = AnswerDescription(
+            title='Anneau passe-guide',
+            description=(
+                'L\'anneau passe-guide était fixé sur le devant du char de '
+                'guerre à deux roues. Il servait à maintenir en place les '
+                'rênes de l\'attelage, le char étant tiré par deux chevaux.'),
+            img=self.img1)
+        self.answer_details = AnswerDetails(
+            order_user=(self.img1, self.img2, self.img3, self.img4),
+            order_all=(self.img3, self.img2, self.img1, self.img4))
+        Clock.schedule_once(self.animate_answer, 0)
+        self.ids.content.add_widget(self.answer_desc)
+        self.ids.content.add_widget(self.answer_details)
+
+    def animate_answer(self, *args):
+        height = self.answer_details.height
+        self.answer_desc.y = self.height
+        self.answer_details.top = 0
+
+        from kivy.metrics import dp
+        self.answer_desc.height = self.height - height - dp(48)
+
+        from kivy.animation import Animation
+        Animation(y=height,
+                t='out_quart').start(self.answer_desc)
+        Animation(y=0.,
+                t='out_quart').start(self.answer_details)
 
     def choice(self, index, touch):
+        if self.done:
+            return
+
         app = App.get_running_app()
         t = int((20 - self.timer) * 10)
         self.choices.append([touch, index])
@@ -145,14 +194,14 @@ class Step(Screen):
         self.scale1, self.scale2, self.scale3, self.scale4 = scales
 
     def add_touch(self, touch):
-        self.add_widget(Touch(pos=touch.pos, touch=touch))
+        self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch))
 
     def remove_touch(self, touch):
-        for child in self.children[:]:
+        for child in self.ids.content.children[:]:
             if not isinstance(child, Touch):
                 continue
             if child.touch is touch:
-                self.remove_widget(child)
+                self.ids.content.remove_widget(child)
                 return
 
 
@@ -166,7 +215,7 @@ class Prejudice(App):
         self.sm = ScreenManager(transition=SlideTransition(
             direction='left', duration=.4))
         self.sm.add_widget(Home(name='home'))
-        self.start_quizz()
+        #self.start_quizz()
         return self.sm
 
     def start_quizz(self):
