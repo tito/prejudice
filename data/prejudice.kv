@@ -5,43 +5,47 @@
 #:set color_blue [0, 218 / 255., 209 / 255., 1.]
 
 <Label>:
-	font_name: 'data/fonts/PTS55F.ttf'
+    font_name: 'data/fonts/PTS55F.ttf'
+
+<Button>:
+	on_release: app.play('CLIC_normal')
 
 <AppButton@Button>:
-	background_normal: ''
-	background_down: ''
-	background_color: color_red if self.state == 'normal' else color_white
-	color: color_red if self.state != 'normal' else color_white
-	size_hint_y: None
-	height: '42dp'
-	font_size: '16sp'
-	font_name: 'data/fonts/PTS55F.ttf'
+    background_normal: ''
+    background_down: ''
+    background_color: color_red if self.state == 'normal' else color_white
+    color: color_red if self.state != 'normal' else color_white
+    size_hint_y: None
+    height: '42dp'
+    font_size: '16sp'
+    font_name: 'data/fonts/PTS55F.ttf'
 
 <AppButtonTransparent@Button>:
-	background_normal: ''
-	background_down: ''
-	background_color: (0, 0, 0, 0)
-	color: color_red if self.state != 'normal' else color_white
-	font_size: '16sp'
-	font_name: 'data/fonts/PTS55F.ttf'
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    color: color_red if self.state != 'normal' else color_white
+    font_size: '16sp'
+    font_name: 'data/fonts/PTS55F.ttf'
 
 <CropCenterImage>:
-	canvas.before:
-		StencilPush
-		Rectangle:
-			pos: self.pos
-			size: self.size
-		StencilUse
-	canvas.after:
-		StencilUnUse
-		Rectangle:
-			pos: self.pos
-			size: self.size
-		StencilPop
+	nocache: True
+    canvas.before:
+        StencilPush
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilUse
+    canvas.after:
+        StencilUnUse
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilPop
 
 <Touch>:
-	size_hint: None, None
-	size: '30dp', '30dp'
+    size_hint: None, None
+    size: '30dp', '30dp'
     canvas:
         Color:
             rgb: 1, 1, 1
@@ -58,8 +62,8 @@
     text: ''
     on_press: self.step.choice(self.index, self.last_touch)
     background_color: color_gray
-	background_normal: ''
-	background_down: ''
+    background_normal: ''
+    background_down: ''
 
     Image:
         size: root.width * root.scale, root.height * root.scale
@@ -87,188 +91,188 @@
                 on_release: app.do_next_step()
 
 <Step>:
-	BoxLayout:
-		size_hint_y: None
-		height: root.height - dp(48)
-		orientation: 'horizontal' if root.width > root.height else 'vertical'
+    BoxLayout:
+        size_hint_y: None
+        height: root.height - dp(48)
+        orientation: 'horizontal' if root.width > root.height else 'vertical'
 
-		CropCenterImage:
-			source: root.baseimg
+        CropCenterImage:
+            source: root.baseimg
 
-		RelativeLayout:
-			id: content
-			BoxLayout:
-				orientation: 'vertical'
-				padding: '5dp'
+        RelativeLayout:
+            id: content
+            BoxLayout:
+                orientation: 'vertical'
+                padding: '5dp'
 
-				# timer trick!
-				BoxLayout:
-					size_hint_y: None
-					height: '80dp'
+                # timer trick!
+                BoxLayout:
+                    size_hint_y: None
+                    height: '80dp'
 
-					RelativeLayout:
+                    RelativeLayout:
 
-						Label:
-							id: lbl
-							text: 'TEMPS RESTANT'
-							text_size: self.width - sp(11), None
-							size_hint_y: None
-							height: '30dp'
-							pos_hint: {'center_y': .5}
-							canvas.before:
-								Color:
-									rgba: color_gray
-								Rectangle:
-									pos: self.pos
-									size: self.size
+                        Label:
+                            id: lbl
+                            text: 'TEMPS RESTANT'
+                            text_size: self.width - sp(11), None
+                            size_hint_y: None
+                            height: '30dp'
+                            pos_hint: {'center_y': .5}
+                            canvas.before:
+                                Color:
+                                    rgba: color_gray
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
 
-						Label:
-							text: 'TEMPS RESTANT'
-							text_size: self.width - sp(11), None
-							color: 0, 0, 0, 1
-							size_hint_y: None
-							height: '24dp'
-							pos_hint: {'center_y': .5}
-							canvas.before:
-								StencilPush
-								Rectangle:
-									pos: self.x + dp(3), self.y
-									size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
-								StencilUse
-								Color:
-									rgba: color_red
-								Rectangle:
-									pos: self.pos
-									size: self.width / 2., self.height
-								Color:
-									rgba: color_blue
-								Rectangle:
-									pos: self.x + self.width / 2., self.y
-									size: self.width / 2., self.height
-							canvas.after:
-								StencilUnUse
-								Rectangle:
-									pos: self.x + dp(3), self.y
-									size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
-								StencilPop
-
-
-						Label:
-							text: 'ce que pensent les autres'
-							size_hint: None, None
-							size: self.texture_size[0] + sp(10), self.texture_size[1]
-							pos_hint: {'x': .5}
-							top: int(lbl.y)
-
-							canvas.before:
-								Color:
-									rgba: color_white
-								Rectangle:
-									pos: self.x, lbl.y - sp(10)
-									size: sp(2), lbl.height + sp(20)
-
-					Widget:
-						size_hint_x: None
-						width: '10dp'
-
-					Label:
-						text: 'MISE: '
-						font_name: 'data/fonts/PTN77F.ttf'
-						size_hint: None, None
-						size: self.texture_size
-						pos_hint: {'center_y': .5}
-
-					Label:
-						text: '{}'.format(root.remaining_count)
-						font_name: 'data/fonts/PTN77F.ttf'
-						font_size: '48sp'
-						size_hint: None, None
-						size: '20sp', self.texture_size[1]
-						pos_hint: {'center_y': .5}
-
-					TouchCounter:
-						count: root.remaining_count
-						size_hint_x: .2
+                        Label:
+                            text: 'TEMPS RESTANT'
+                            text_size: self.width - sp(11), None
+                            color: 0, 0, 0, 1
+                            size_hint_y: None
+                            height: '24dp'
+                            pos_hint: {'center_y': .5}
+                            canvas.before:
+                                StencilPush
+                                Rectangle:
+                                    pos: self.x + dp(3), self.y
+                                    size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
+                                StencilUse
+                                Color:
+                                    rgba: color_red
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.width / 2., self.height
+                                Color:
+                                    rgba: color_blue
+                                Rectangle:
+                                    pos: self.x + self.width / 2., self.y
+                                    size: self.width / 2., self.height
+                            canvas.after:
+                                StencilUnUse
+                                Rectangle:
+                                    pos: self.x + dp(3), self.y
+                                    size: (self.width - dp(6)) * (1 - root.timer / 20.), self.height
+                                StencilPop
 
 
-				Widget:
-					size_hint_y: None
-					height: '5dp'
+                        Label:
+                            text: 'ce que pensent les autres'
+                            size_hint: None, None
+                            size: self.texture_size[0] + sp(10), self.texture_size[1]
+                            pos_hint: {'x': .5}
+                            top: int(lbl.y)
 
-				BoxLayout:
-					orientation: 'horizontal'
-						
-					GridLayout:
-						cols: 2
-						spacing: '10dp'
+                            canvas.before:
+                                Color:
+                                    rgba: color_white
+                                Rectangle:
+                                    pos: self.x, lbl.y - sp(10)
+                                    size: sp(2), lbl.height + sp(20)
 
-						ButtonChoice:
-							index: 1
-							step: root
-							source: root.img1
-							scale: root.scale1
+                    Widget:
+                        size_hint_x: None
+                        width: '10dp'
 
-						ButtonChoice:
-							index: 2
-							step: root
-							source: root.img2
-							scale: root.scale2
+                    Label:
+                        text: 'MISE: '
+                        font_name: 'data/fonts/PTN77F.ttf'
+                        size_hint: None, None
+                        size: self.texture_size
+                        pos_hint: {'center_y': .5}
 
-						ButtonChoice:
-							index: 3
-							step: root
-							source: root.img3
-							scale: root.scale3
+                    Label:
+                        text: '{}'.format(root.remaining_count)
+                        font_name: 'data/fonts/PTN77F.ttf'
+                        font_size: '48sp'
+                        size_hint: None, None
+                        size: '20sp', self.texture_size[1]
+                        pos_hint: {'center_y': .5}
 
-						ButtonChoice:
-							index: 4
-							step: root
-							source: root.img4
-							scale: root.scale4
+                    TouchCounter:
+                        count: root.remaining_count
+                        size_hint_x: .2
 
-	# real toolbar, above everything
-	BoxLayout:
-		top: root.height
-		size_hint_y: None
-		height: '48dp'
 
-		canvas.before:
-			Color:
-				rgba: color_red
-			Rectangle:
-				pos: self.pos
-				size: self.size
+                Widget:
+                    size_hint_y: None
+                    height: '5dp'
 
-		Image:
-			source: 'data/logo.png'
-			size_hint_x: None
-			width: self.height * self.image_ratio
+                BoxLayout:
+                    orientation: 'horizontal'
+                        
+                    GridLayout:
+                        cols: 2
+                        spacing: '10dp'
 
-		Label:
-			text: 'Apriori'
-			font_size: '24dp'
-			font_name: 'data/fonts/PTN57F.ttf'
-			color: color_white
-			size_hint_x: None
-			width: self.texture_size[0] + sp(20)
+                        ButtonChoice:
+                            index: 1
+                            step: root
+                            source: root.img1
+                            scale: root.scale1
 
-		Widget
+                        ButtonChoice:
+                            index: 2
+                            step: root
+                            source: root.img2
+                            scale: root.scale2
 
-		Button:
-			id: btn
-			background_normal: ''
-			background_down: ''
-			background_color: 0, 0, 0, 0
-			size_hint_x: None
-			width: self.height
-			on_release: app.stop_quizz()
-			AnchorLayout:
-				pos: btn.pos
-				size: btn.size
-				Image:
-					source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
-					size: '20sp', '20sp'
-					size_hint: None, None
+                        ButtonChoice:
+                            index: 3
+                            step: root
+                            source: root.img3
+                            scale: root.scale3
+
+                        ButtonChoice:
+                            index: 4
+                            step: root
+                            source: root.img4
+                            scale: root.scale4
+
+    # real toolbar, above everything
+    BoxLayout:
+        top: root.height
+        size_hint_y: None
+        height: '48dp'
+
+        canvas.before:
+            Color:
+                rgba: color_red
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Image:
+            source: 'data/logo.png'
+            size_hint_x: None
+            width: self.height * self.image_ratio
+
+        Label:
+            text: 'Apriori'
+            font_size: '24dp'
+            font_name: 'data/fonts/PTN57F.ttf'
+            color: color_white
+            size_hint_x: None
+            width: self.texture_size[0] + sp(20)
+
+        Widget
+
+        Button:
+            id: btn
+            background_normal: ''
+            background_down: ''
+            background_color: 0, 0, 0, 0
+            size_hint_x: None
+            width: self.height
+            on_release: app.stop_quizz()
+            AnchorLayout:
+                pos: btn.pos
+                size: btn.size
+                Image:
+                    source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
+                    size: '20sp', '20sp'
+                    size_hint: None, None
 
 
 
@@ -315,465 +319,471 @@
 
 
 <-HomeButton@Button>:
-	background_color: color_red if self.state == 'normal' else color_white
-	color: color_red if self.state != 'normal' else color_white
-	size_hint_y: None
-	height: '80dp'
-	font_size: '20sp'
-	font_name: 'data/fonts/PTS75F.ttf'
+    background_color: color_red if self.state == 'normal' else color_white
+    color: color_red if self.state != 'normal' else color_white
+    size_hint_y: None
+    height: '80dp'
+    font_size: '20sp'
+    font_name: 'data/fonts/PTS75F.ttf'
+	on_release: app.play('CLIC_normal')
 
-	canvas:
-		Color:
-			rgba: root.background_color
-		Rectangle:
-			pos: self.pos
-			size: self.size
+    canvas:
+        Color:
+            rgba: root.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-	AnchorLayout:
-		pos: root.pos
-		size: root.size
+    AnchorLayout:
+        pos: root.pos
+        size: root.size
 
-		GridLayout:
-			orientation: 'horizontal'
-			cols: 2
-			size_hint: None, None
-			size: self.minimum_size
-			spacing: '10sp'
+        GridLayout:
+            orientation: 'horizontal'
+            cols: 2
+            size_hint: None, None
+            size: self.minimum_size
+            spacing: '10sp'
 
-			Image:
-				source: root.background_normal if root.state == 'normal' else root.background_down
-				size_hint: None, None
-				size: '20sp', '20sp'
+            Image:
+                source: root.background_normal if root.state == 'normal' else root.background_down
+                size_hint: None, None
+                size: '20sp', '20sp'
 
-			Image:
-				color: root.color
-				pos: int(self.x), int(self.y)
-				texture: root.texture
-				size_hint: None, None
-				size: root.texture_size
+            Image:
+                color: root.color
+                pos: int(self.x), int(self.y)
+                texture: root.texture
+                size_hint: None, None
+                size: root.texture_size
 
 <-InvertedIconButton@Button>:
-	background_color: color_red if self.state != 'normal' else color_white
-	color: color_red if self.state == 'normal' else color_white
-	size_hint_y: None
-	height: '48dp'
-	font_size: '20sp'
-	font_name: 'data/fonts/PTS75F.ttf'
+    background_color: color_red if self.state != 'normal' else color_white
+    color: color_red if self.state == 'normal' else color_white
+    size_hint_y: None
+    height: '48dp'
+    font_size: '20sp'
+    font_name: 'data/fonts/PTS75F.ttf'
 
-	canvas:
-		Color:
-			rgba: root.background_color
-		Rectangle:
-			pos: self.pos
-			size: self.size
+    canvas:
+        Color:
+            rgba: root.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-	AnchorLayout:
-		pos: root.pos
-		size: root.size
+    AnchorLayout:
+        pos: root.pos
+        size: root.size
 
-		GridLayout:
-			orientation: 'horizontal'
-			cols: 2
-			size_hint: None, None
-			size: self.minimum_size
-			spacing: '10sp'
+        GridLayout:
+            orientation: 'horizontal'
+            cols: 2
+            size_hint: None, None
+            size: self.minimum_size
+            spacing: '10sp'
 
-			Image:
-				source: root.background_normal if root.state == 'normal' else root.background_down
-				size_hint: None, None
-				size: '20sp', '20sp'
+            Image:
+                source: root.background_normal if root.state == 'normal' else root.background_down
+                size_hint: None, None
+                size: '20sp', '20sp'
 
-			Image:
-				color: root.color
-				pos: int(self.x), int(self.y)
-				texture: root.texture
-				size_hint: None, None
-				size: root.texture_size
+            Image:
+                color: root.color
+                pos: int(self.x), int(self.y)
+                texture: root.texture
+                size_hint: None, None
+                size: root.texture_size
 
 <Home>:
-	canvas.before:
-		Color:
-			rgba: color_gray
-		Rectangle:
-			size: self.size
+    canvas.before:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
 
-	BoxLayout:
-		orientation: 'vertical'
-		Image:
-			source: 'data/presplash.png'
+    BoxLayout:
+        orientation: 'vertical'
+        Image:
+            source: 'data/presplash.png'
 
-		GridLayout:
-			cols: 2 if root.width > root.height else 1
-			spacing: 1
-			size_hint_y: None
-			height: self.minimum_height
+        GridLayout:
+            cols: 2 if root.width > root.height else 1
+            spacing: 1
+            size_hint_y: None
+            height: self.minimum_height
 
-			HomeButton:
-				text: 'DÉMARRER UN QUIZZ'
-				on_release: app.list_quizz()
-				background_normal: 'data/icons/picto_demarrer2.png'
-				background_down: 'data/icons/picto_demarrer.png'
+            HomeButton:
+                text: 'DÉMARRER UN QUIZZ'
+                on_release: app.list_quizz()
+                background_normal: 'data/icons/picto_demarrer2.png'
+                background_down: 'data/icons/picto_demarrer.png'
 
-			HomeButton:
-				text: 'AJOUTER UN QUIZZ'
-				on_release: app.add_quizz()
-				background_normal: 'data/icons/picto_ajouter2.png'
-				background_down: 'data/icons/picto_ajouter.png'
+            HomeButton:
+                text: 'AJOUTER UN QUIZZ'
+                on_release: app.add_quizz()
+                background_normal: 'data/icons/picto_ajouter2.png'
+                background_down: 'data/icons/picto_ajouter.png'
 
-			HomeButton:
-				text: 'STATISTIQUES PERSONNELS'
-				background_normal: 'data/icons/picto_stats2.png'
-				background_down: 'data/icons/picto_stats.png'
+            HomeButton:
+                text: 'STATISTIQUES PERSONNELS'
+                background_normal: 'data/icons/picto_stats2.png'
+                background_down: 'data/icons/picto_stats.png'
 
-			HomeButton:
-				text: 'LE PROJET'
-				background_normal: 'data/icons/picto_explications2.png'
-				background_down: 'data/icons/picto_explications.png'
+            HomeButton:
+                text: 'LE PROJET'
+                background_normal: 'data/icons/picto_explications2.png'
+                background_down: 'data/icons/picto_explications.png'
 
 <AnswerDescription>:
-	size_hint_y: None
-	pos: int(self.x), int(self.y)
-	canvas:
-		Color:
-			rgba: 0, 0, 0, 1
-		Rectangle:
-			size: self.size
+    size_hint_y: None
+    pos: int(self.x), int(self.y)
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            size: self.size
 
-	BoxLayout:
-		orientation: 'vertical'
-		padding: '10dp'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '10dp'
 
-		BoxLayout:
-			padding: '10dp'
-			spacing: '10dp'
-			size_hint_y: None
-			height: '96dp'
+        BoxLayout:
+            padding: '10dp'
+            spacing: '10dp'
+            size_hint_y: None
+            height: '96dp'
 
-			Image:
-				allow_stretch: True
-				source: root.img
-				size_hint_x: None
-				width: self.height
+            Image:
+                allow_stretch: True
+                source: root.img
+                size_hint_x: None
+                width: self.height
 
-			Label:
-				text: root.title
-				font_size: '24sp'
-				font_name: 'data/fonts/PTS56F.ttf'
+            Label:
+                text: root.title
+                font_size: '24sp'
+                font_name: 'data/fonts/PTS56F.ttf'
 
-		Label:
-			text: root.description
-			text_size: self.width + 1, None
+        Label:
+            text: root.description
+            text_size: self.width + 1, None
 
 <AnswerDetails>:
-	canvas:
-		Color:
-			rgba: color_gray
-		Rectangle:
-			size: self.size
+    canvas:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
 
-	size_hint_y: None
-	height: '128dp'
+    size_hint_y: None
+    height: '128dp'
 
-	BoxLayout:
-		padding: '10dp'
-		spacing: '10dp'
-		BoxLayout:
-			orientation: 'vertical'
-			Label:
-				text: 'Vous avez répondu'
-				text_size: self.width, None
-				height: '20dp'
-				size_hint_y: None
+    BoxLayout:
+        padding: '10dp'
+        spacing: '10dp'
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'Vous avez répondu'
+                text_size: self.width, None
+                height: '20dp'
+                size_hint_y: None
 
-			BoxLayout:
-				spacing: '2dp'
-				Image:
-					source: root.order_user[0]
-				Image:
-					source: root.order_user[1]
-				Image:
-					source: root.order_user[2]
-				Image:
-					source: root.order_user[3]
+            BoxLayout:
+                spacing: '2dp'
+                Image:
+                    source: root.order_user[0]
+                Image:
+                    source: root.order_user[1]
+                Image:
+                    source: root.order_user[2]
+                Image:
+                    source: root.order_user[3]
 
-		BoxLayout:
-			orientation: 'vertical'
-			Label:
-				text: 'Les autres ont répondu'
-				text_size: self.width, None
-				height: '20dp'
-				size_hint_y: None
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'Les autres ont répondu'
+                text_size: self.width, None
+                height: '20dp'
+                size_hint_y: None
 
-			BoxLayout:
-				spacing: '2dp'
-				Image:
-					source: root.order_all[0]
-				Image:
-					source: root.order_all[1]
-				Image:
-					source: root.order_all[2]
-				Image:
-					source: root.order_all[3]
+            BoxLayout:
+                spacing: '2dp'
+                Image:
+                    source: root.order_all[0]
+                Image:
+                    source: root.order_all[1]
+                Image:
+                    source: root.order_all[2]
+                Image:
+                    source: root.order_all[3]
 
 
 <IndiceSelector>:
-	is_answer: cb.active
-	title: title.text
-	source: image.source
+    is_answer: cb.active
+    title: title.text
+    source: image.source
 
-	size_hint_y: None
-	height: '196sp'
-	GridLayout:
-		cols: 2
-		size_hint: None, None
-		size: root.width, '196sp'
-		top: root.top
-		x: root.x
+    size_hint_y: None
+    height: '196sp'
+    GridLayout:
+        cols: 2
+        size_hint: None, None
+        size: root.width, '196sp'
+        top: root.top
+        x: root.x
 
-		canvas:
-			Color:
-				rgba: 0, 0, 0, .1
-			Rectangle:
-				pos: self.pos
-				size: self.size
+        canvas:
+            Color:
+                rgba: 0, 0, 0, .1
+            Rectangle:
+                pos: self.pos
+                size: self.size
 
-		BoxLayout:
-			orientation: 'vertical'
-			padding: '10sp'
+        BoxLayout:
+            orientation: 'vertical'
+            padding: '10sp'
 
-			TextInput:
-				id: title
-				hint_text: 'Indice'
-				multiline: False
-				size_hint_y: None
-				height: '30sp'
+            TextInput:
+                id: title
+                hint_text: 'Indice'
+                multiline: False
+                size_hint_y: None
+                height: '30sp'
 
-			BoxLayout:
-				Label:
-					text: 'Réponse correcte'
+            BoxLayout:
+                Label:
+                    text: 'Réponse correcte'
 
-				CheckBox:
-					id: cb
-					group: 'reponse'
+                CheckBox:
+                    id: cb
+                    group: 'reponse-{}'.format(root.step_index)
 
-			AppButton:
-				text: 'Supprimer'
-				on_release: root.animate_close()
-				
+#            AppButton:
+#                text: 'Supprimer'
+#                on_release: root.animate_close()
 
-		PictureImporter:
-			id: image
-			size_hint_x: None
-			width: self.height
+        PictureImporter:
+            id: image
+            size_hint_x: None
+            width: self.height
 
 
 <AddQuizzTitle@Label>:
-	size_hint_y: None
-	height: self.texture_size[1]
-	text_size: self.width, None
-	canvas.before:
-		Color:
-			rgb: 0, 0, 0
-		Rectangle:
-			pos: self.x - sp(10), self.y - sp(10)
-			size: self.width + sp(20), self.height + sp(20)
+    size_hint_y: None
+    height: self.texture_size[1]
+    text_size: self.width, None
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.x - sp(10), self.y - sp(10)
+            size: self.width + sp(20), self.height + sp(20)
 
 
 <AddQuizz>:
-	canvas.before:
-		Color:
-			rgba: color_gray
-		Rectangle:
-			size: self.size
+    canvas.before:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
 
-	BoxLayout:
-		orientation: 'vertical'
+    BoxLayout:
+        orientation: 'vertical'
 
-		# real toolbar, above everything
-		BoxLayout:
-			size_hint_y: None
-			height: '48dp'
+        # real toolbar, above everything
+        BoxLayout:
+            size_hint_y: None
+            height: '48dp'
 
-			canvas.before:
-				Color:
-					rgba: color_red
-				Rectangle:
-					pos: self.pos
-					size: self.size
+            canvas.before:
+                Color:
+                    rgba: color_red
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
-			Image:
-				source: 'data/logo.png'
-				size_hint_x: None
-				width: self.height * self.image_ratio
+            Image:
+                source: 'data/logo.png'
+                size_hint_x: None
+                width: self.height * self.image_ratio
 
-			Label:
-				text: 'Apriori'
-				font_size: '24dp'
-				font_name: 'data/fonts/PTN57F.ttf'
-				color: color_white
-				size_hint_x: None
-				width: self.texture_size[0] + sp(20)
+            Label:
+                text: 'Apriori'
+                font_size: '24dp'
+                font_name: 'data/fonts/PTN57F.ttf'
+                color: color_white
+                size_hint_x: None
+                width: self.texture_size[0] + sp(20)
 
-			Widget
+            Widget
 
-			Button:
-				id: btn
-				background_normal: ''
-				background_down: ''
-				background_color: 0, 0, 0, 0
-				size_hint_x: None
-				width: self.height
-				on_release: app.stop_quizz()
-				AnchorLayout:
-					pos: btn.pos
-					size: btn.size
-					Image:
-						source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
-						size: '20sp', '20sp'
-						size_hint: None, None
+            Button:
+                id: btn
+                background_normal: ''
+                background_down: ''
+                background_color: 0, 0, 0, 0
+                size_hint_x: None
+                width: self.height
+                on_release: app.stop_quizz()
+                AnchorLayout:
+                    pos: btn.pos
+                    size: btn.size
+                    Image:
+                        source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
+                        size: '20sp', '20sp'
+                        size_hint: None, None
 
-		InvertedIconButton:
-			text: 'AJOUTER UN QUIZZ'
-			background_normal: 'data/icons/picto_ajouter.png'
-			background_down: 'data/icons/picto_ajouter2.png'
-			on_release: root.add()
+        InvertedIconButton:
+            text: 'AJOUTER UN QUIZZ'
+            background_normal: 'data/icons/picto_ajouter.png'
+            background_down: 'data/icons/picto_ajouter2.png'
+            on_release: root.add()
 
-		ScrollView:
-			id: sv
+        ScrollView:
+            id: sv
 
-			do_scroll_x: False
-			do_scroll_y: self.width <= self.height
+            do_scroll_x: False
+            do_scroll_y: self.width <= self.height
 
-			GridLayout:
-				id: baselayout
-				cols: 2 if sv.width > sv.height else 1
-				size_hint_y: None
-				height: sv.height if self.cols == 2 else sv.height + gl.height
-				on_height: print 'g height', self.height
+            GridLayout:
+                id: baselayout
+                cols: 2 if sv.width > sv.height else 1
+                size_hint_y: None
+                height: sv.height if self.cols == 2 else sv.height + gl.height
+                on_height: print 'g height', self.height
 
-				BoxLayout:
-					orientation: 'vertical'
-					padding: '10sp'
-					spacing: '10sp'
-					size_hint_y: None
-					height: sv.height
+                BoxLayout:
+                    orientation: 'vertical'
+                    padding: '10sp'
+                    spacing: '10sp'
+                    size_hint_y: None
+                    height: sv.height
 
-					AddQuizzTitle:
-						text: '1. Choisir l\'image mystère'
+                    AddQuizzTitle:
+                        text: '1. Choisir l\'image mystère'
 
-					Widget:
-						size_hint_y: None
-						height: 0
+                    Widget:
+                        size_hint_y: None
+                        height: 0
 
 
-					PictureImporter:
-						id: main_image
-						text: 'Choisir l\'image mystère'
-						canvas.before:
-							Color:
-								rgba: color_gray
-							Rectangle:
-								pos: self.pos
-								size: self.size
+                    PictureImporter:
+                        id: main_image
+                        text: 'Choisir l\'image mystère'
+                        canvas.before:
+                            Color:
+                                rgba: color_gray
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
 
-#			Widget:
-#				size_hint_x: None
-#				width: '2sp'
-#				canvas.before:
-#					Color:
-#						rgba: color_white
-#					Rectangle:
-#						pos: self.pos
-#						size: self.size
+#            Widget:
+#                size_hint_x: None
+#                width: '2sp'
+#                canvas.before:
+#                    Color:
+#                        rgba: color_white
+#                    Rectangle:
+#                        pos: self.pos
+#                        size: self.size
 
-				ScrollView:
-					do_scroll_x: False
-					do_scroll_y: not sv.do_scroll_y
-					height: sv.height if self.do_scroll_y else gl.height
-					canvas.before:
-						Color:
-							rgba: color_gray
-						Rectangle:
-							pos: self.pos
-							size: self.size
+                ScrollView:
+                    do_scroll_x: False
+                    do_scroll_y: not sv.do_scroll_y
+                    height: sv.height if self.do_scroll_y else gl.height
+                    canvas.before:
+                        Color:
+                            rgba: color_gray
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
-					RelativeLayout:
-						size_hint_y: None
-						height: gl.height
-						pos: int(self.x), int(self.y)
+                    RelativeLayout:
+                        size_hint_y: None
+                        height: gl.height
+                        pos: int(self.x), int(self.y)
 
-						GridLayout:
-							id: gl
-							cols: 1
-							size_hint_y: None
-							height: self.minimum_height
-							padding: '10sp'
-							spacing: '10sp'
+                        GridLayout:
+                            id: gl
+                            cols: 1
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: '10sp'
+                            spacing: '10sp'
 
-							AddQuizzTitle:
-								text: '2. De quoi s\'agit-il ?'
+                            AddQuizzTitle:
+                                text: '2. De quoi s\'agit-il ?'
 
-							Widget:
-								size_hint_y: None
-								height: 0
+                            Widget:
+                                size_hint_y: None
+                                height: 0
 
-							TextInput:
-								id: title
-								hint_text: 'Un anneau passe-guide'
-								multiline: False
-								size_hint_y: None
-								height: '30sp'
+                            TextInput:
+                                id: title
+                                hint_text: 'Un anneau passe-guide'
+                                multiline: False
+                                size_hint_y: None
+                                height: '30sp'
 
-							TextInput:
-								id: description
-								multiline: True
-								hint_text: 'Description de l\'image'
-								size_hint_y: None
-								height: sp(30) * 4
+                            TextInput:
+                                id: description
+                                multiline: True
+                                hint_text: 'Description de l\'image'
+                                size_hint_y: None
+                                height: sp(30) * 4
 
-							ScrollView:
-								do_scroll_y: False
-								size_hint_y: None
-								height: '196sp'
+                            ScrollView:
+                                do_scroll_y: False
+                                size_hint_y: None
+                                height: '196sp'
 
-								GridLayout:
-									id: answers
-									rows: 1
-									size_hint_x: None
-									width: self.minimum_width
-									col_default_width: '196sp'
-									col_force_default: True
-									spacing: '10sp'
+                                GridLayout:
+                                    id: answers
+                                    rows: 1
+                                    size_hint_x: None
+                                    width: self.minimum_width
+                                    col_default_width: '196sp'
+                                    col_force_default: True
+                                    spacing: '10sp'
 
-									PictureImporter
-									PictureImporter
+                                    PictureImporter
+                                    PictureImporter
 
-							Widget:
-								size_hint_y: None
-								height: 0
+                            Widget:
+                                size_hint_y: None
+                                height: 0
 
-							AddQuizzTitle:
-								text: '3. Les indices'
+                            AddQuizzTitle:
+                                text: '3. Les indices'
 
-							Widget:
-								size_hint_y: None
-								height: 0
+                            Widget:
+                                size_hint_y: None
+                                height: 0
 
-							GridLayout:
-								id: indices
-								cols: 1
-								size_hint_y: None
-								height: self.minimum_height
-								spacing: '10sp'
+                            GridLayout:
+                                id: indices
+                                cols: 1
+                                size_hint_y: None
+                                height: self.minimum_height
+                                spacing: '10sp'
 
-								IndiceSelector
-								IndiceSelector
-								IndiceSelector
-								IndiceSelector
+								AddQuizzStep:
+									ctrl: root
+                                IndiceSelector:
+									step_index: 1
+                                IndiceSelector:
+									step_index: 1
+                                IndiceSelector:
+									step_index: 1
+                                IndiceSelector:
+									step_index: 1
 
-							AppButton:
-								text: 'Ajouter un indice'
-								on_release: root.add_indice()
+                            AppButton:
+                                text: 'Ajouter une étape'
+                                on_release: root.add_step()
 
 #
 # Picture Importer
@@ -782,15 +792,15 @@
 <PictureImporterBase>:
     AnchorLayout:
         id: selector
-		canvas:
-			Color:
-				rgba: color_white[:3] + [.2]
-			Line:
-				points: [self.x, self.y, self.right, self.top]
-			Line:
-				points: [self.x, self.top, self.right, self.y]
-			Line:
-				rectangle: self.x, self.y, self.width, self.height
+        canvas:
+            Color:
+                rgba: color_white[:3] + [.2]
+            Line:
+                points: [self.x, self.y, self.right, self.top]
+            Line:
+                points: [self.x, self.top, self.right, self.y]
+            Line:
+                rectangle: self.x, self.y, self.width, self.height
         AppButton:
             text: 'Importer une image'
             size_hint_x: None
@@ -814,16 +824,16 @@
     separator_color: color_white
 
 <AppPopupButton@Button>:
-	background_normal: ''
-	background_down: ''
-	color: color_white
-	background_color: (.5, .5, .5, 1) if self.state == 'normal' else (.7, .7, .7, 1)
+    background_normal: ''
+    background_down: ''
+    color: color_white
+    background_color: (.5, .5, .5, 1) if self.state == 'normal' else (.7, .7, .7, 1)
 
 <-AppPopup>:
-	background: 'data/app-popup-bg.png'
-	_content: content
-	size_hint: None, None
-	size: '300sp', '150sp'
+    background: 'data/app-popup-bg.png'
+    _content: content
+    size_hint: None, None
+    size: '300sp', '150sp'
     canvas:
         Color:
             rgba: root.background_color[:3] + [root.background_color[-1] * self._anim_alpha]
@@ -844,113 +854,202 @@
         size_hint: None, None
         pos: root.pos
         size: root.size
-		id: content
+        id: content
 
-		BoxLayout:
-			orientation: 'vertical'
-			padding: '20sp'
+        BoxLayout:
+            orientation: 'vertical'
+            padding: '20sp'
 
-			Label:
-				text: root.message
-				halign: 'center'
-				color: color_red
+            Label:
+                text: root.message
+                halign: 'center'
+                color: color_red
 
-			AnchorLayout:
-				AppPopupButton:
-					text: 'OK'
-					on_release: root.dismiss()
-					size_hint: None, None
-					height: '42dp'
-					width: self.texture_size[0] + sp(60)
+            AnchorLayout:
+                AppPopupButton:
+                    text: 'OK'
+                    on_release: root.dismiss()
+                    size_hint: None, None
+                    height: '42dp'
+                    width: self.texture_size[0] + sp(60)
 
 
 <ListQuizzItem>:
-	cols: 1
-	size_hint: None, None
-	size: '196sp', '196sp'
-	canvas.before:
-		Color:
-			rgba: color_red[:3] + [int(self.selected)]
-		Rectangle:
-			pos: self.x - sp(2), self.y - sp(2)
-			size: self.width + sp(4), self.height + sp(4)
+    cols: 1
+    size_hint: None, None
+    size: '196sp', '196sp'
+    canvas.before:
+        Color:
+            rgba: color_red[:3] + [int(self.selected)]
+        Rectangle:
+            pos: self.x - sp(2), self.y - sp(2)
+            size: self.width + sp(4), self.height + sp(4)
+        Color:
+            rgba: color_white
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    CropCenterImage:
+        source: root.source
+
+<ListQuizz>:
+    canvas.before:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # real toolbar, above everything
+        BoxLayout:
+            size_hint_y: None
+            height: '48dp'
+
+            canvas.before:
+                Color:
+                    rgba: color_red
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Image:
+                source: 'data/logo.png'
+                size_hint_x: None
+                width: self.height * self.image_ratio
+
+            Label:
+                text: 'Apriori'
+                font_size: '24dp'
+                font_name: 'data/fonts/PTN57F.ttf'
+                color: color_white
+                size_hint_x: None
+                width: self.texture_size[0] + sp(20)
+
+            Widget
+
+            Button:
+                id: btn
+                background_normal: ''
+                background_down: ''
+                background_color: 0, 0, 0, 0
+                size_hint_x: None
+                width: self.height
+                on_release: app.stop_quizz()
+                AnchorLayout:
+                    pos: btn.pos
+                    size: btn.size
+                    Image:
+                        source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
+                        size: '20sp', '20sp'
+                        size_hint: None, None
+
+        GridLayout:
+            cols: 1
+            padding: '10sp'
+            size_hint_y: None
+            height: self.minimum_height
+
+            AddQuizzTitle:
+                text: 'Sélectionne un quizz'
+
+        ScrollView:
+
+            GridLayout:
+                id: listquizz
+                cols: self.width // int(sp(196))
+                size_hint_y: None
+                height: self.minimum_height
+                padding: '10sp'
+                spacing: '10sp'
+
+<CameraGalleryChooser>:
+
+<-CameraGalleryPopup>:
+    background: 'data/app-popup-bg.png'
+    _content: content
+    size_hint: None, None
+    size: '300sp', '150sp'
+    canvas:
+        Color:
+            rgba: root.background_color[:3] + [root.background_color[-1] * self._anim_alpha]
+        Rectangle:
+            size: self._window.size if self._window else (0, 0)
+
+        Color:
+            rgb: 1, 1, 1
+        BorderImage:
+            source: root.background
+            border: root.border
+            pos: self.pos
+            size: self.size
+
+    GridLayout:
+        id: content
+        rows: 2
+        padding: '10sp'
+        spacing: '10sp'
+
+        AppPopupButton:
+            text: 'Prendre une photo'
+            on_release: root.importer.take_picture()
+
+        AppPopupButton:
+            text: 'Sélectionner dans la galerie'
+            on_release: root.importer.choose_gallery()
+
+<LoadingScreen>:
+    canvas.before:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
+
+	Image:
+		source: 'data/presplash.png'
+
+<Separator>:
+	size_hint_y: None
+	height: sp(2)
+	canvas:
 		Color:
 			rgba: color_white
 		Rectangle:
-			size: self.size
 			pos: self.pos
+			size: self.size
 
-	CropCenterImage:
-		source: root.source
 
-<ListQuizz>:
+<AddQuizzStep>:
+    size_hint_y: None
+    height: sp(32)
+    text_size: self.width, None
+
 	canvas.before:
 		Color:
-			rgba: color_gray
+			rgba: (0, 0, 0, .5)
 		Rectangle:
+			pos: self.pos
 			size: self.size
 
-	BoxLayout:
-		orientation: 'vertical'
+	GridLayout:
+		cols: 2
+		Label:
+			text: 'Etape {}'.format(root.index)
 
-		# real toolbar, above everything
-		BoxLayout:
-			size_hint_y: None
-			height: '48dp'
-
-			canvas.before:
-				Color:
-					rgba: color_red
-				Rectangle:
-					pos: self.pos
-					size: self.size
-
-			Image:
-				source: 'data/logo.png'
-				size_hint_x: None
-				width: self.height * self.image_ratio
-
-			Label:
-				text: 'Apriori'
-				font_size: '24dp'
-				font_name: 'data/fonts/PTN57F.ttf'
-				color: color_white
-				size_hint_x: None
-				width: self.texture_size[0] + sp(20)
-
-			Widget
-
-			Button:
-				id: btn
-				background_normal: ''
-				background_down: ''
-				background_color: 0, 0, 0, 0
-				size_hint_x: None
-				width: self.height
-				on_release: app.stop_quizz()
-				AnchorLayout:
-					pos: btn.pos
-					size: btn.size
-					Image:
-						source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
-						size: '20sp', '20sp'
-						size_hint: None, None
-
-		GridLayout:
-			cols: 1
-			padding: '10sp'
-			size_hint_y: None
-			height: self.minimum_height
-
-			AddQuizzTitle:
-				text: 'Sélectionne un quizz'
-
-		ScrollView:
-
-			GridLayout:
-				id: listquizz
-				cols: self.width // int(sp(196))
-				size_hint_y: None
-				height: self.minimum_height
-				padding: '10sp'
-				spacing: '10sp'
+		Button:
+			id: btn
+			background_normal: ''
+			background_down: ''
+			background_color: 0, 0, 0, 0
+			size_hint_x: None
+			width: self.height
+			on_release: root.delete()
+			AnchorLayout:
+				pos: btn.pos
+				size: btn.size
+				Image:
+					source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
+					size: '20sp', '20sp'
+					size_hint: None, None

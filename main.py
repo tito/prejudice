@@ -1,5 +1,7 @@
 #: -*- coding: utf-8 -*-
 
+__version__ = '0.1'
+
 from kivy.app import App
 from kivy.properties import StringProperty, ListProperty, \
         NumericProperty, ObjectProperty, BooleanProperty, \
@@ -12,6 +14,7 @@ from kivy.uix.relativelayout import RelativeLayout
 from kivy.clock import Clock
 from libs.pictureimporter import PictureImporter
 from kivy.uix.gridlayout import GridLayout
+from kivy.core.audio import SoundLoader
 from os.path import join, exists, dirname, basename
 from kivy.uix.stencilview import StencilView
 from kivy.animation import Animation
@@ -21,6 +24,10 @@ from functools import partial
 import os
 import json
 import shutil
+import sys
+
+sys.path += ['libs']
+app = None
 
 
 MAX_CHOICES = 5
@@ -34,6 +41,7 @@ class IndiceSelector(StencilView):
     is_answer = BooleanProperty(False)
     title = StringProperty()
     source = StringProperty()
+    step_index = NumericProperty(0)
 
     def detach(self, *args):
         self.parent.remove_widget(self)
@@ -48,13 +56,43 @@ class IndiceSelector(StencilView):
         anim.bind(on_complete=self.detach)
         anim.start(self)
 
+class Separator(Widget):
+    pass
+
+class AddQuizzStep(RelativeLayout):
+    ctrl = ObjectProperty()
+    index = NumericProperty(1)
+
+    def delete(self):
+        children = self.ctrl.ids.indices.children
+        index = children.index(self)
+        for child in children[index-4:index+1]:
+            if isinstance(child, IndiceSelector):
+                child.animate_close()
+            else:
+                self.ctrl.ids.indices.remove_widget(child)
+        try:
+            self.ctrl.ids.indices.remove_widget(children[index])
+        except:
+            pass
 
 class AddQuizz(Screen):
+    step_current_index = NumericProperty(1)
     def abort(self):
         pass
 
+    def add_step(self):
+        self.step_current_index += 1
+        index = len([x for x in self.ids.indices.children \
+                if isinstance(x, AddQuizzStep)]) + 1
+        if self.ids.indices.children:
+            self.ids.indices.add_widget(Separator())
+        self.ids.indices.add_widget(AddQuizzStep(ctrl=self, index=index))
+        for x in xrange(4):
+            self.add_indice()
+
     def add_indice(self):
-        indice = IndiceSelector()
+        indice = IndiceSelector(step_index=self.step_current_index)
         indice.animate_open()
         self.ids.indices.add_widget(indice)
 
@@ -80,19 +118,34 @@ class AddQuizz(Screen):
             return e('Le titre est trop petit')
         if not main_image:
             return e('Il manque l\'image mystère')
-        if len(indices) < 4:
-            return e('Il faut au minimum 4 indices')
-        if not any([indice.is_answer for indice in indices]):
-            return e('Il n\'y a pas d\'indice réponse')
+        if len([indice for indice in indices if isinstance(indice, IndiceSelector)]) < 4:
+            return e('Il faut au minimum 4 indices / 1 étape')
 
-        l_indices = []
+        l_steps = []
+        step = []
+
         for indice in indices:
+            if not isinstance(indice, IndiceSelector):
+                continue
             if not (indice.title or indice.source):
                 return e('Un indice manque d\'un titre\nou d\'une image')
-            l_indices.append({
+            step.append({
                 'title': indice.title,
                 'source': indice.source,
                 'is_answer': indice.is_answer})
+            if len(step) == 4:
+                if not any([x['is_answer'] for x in step]):
+                    index = len(l_steps) + 1
+                    return e('L\'étape {} n\'a pas d\'indice réponse'.format(
+                        index))
+
+                l_steps.append(step)
+                step = []
+
+
+        if step and len(step) == 4:
+            l_steps.append(step)
+
         l_answers = []
         for answer in answers:
             if answer.source:
@@ -105,7 +158,7 @@ class AddQuizz(Screen):
             description=description,
             main_image=main_image,
             answers=l_answers,
-            indices=l_indices)
+            steps=l_steps)
 
         App.get_running_app().save_quizz(quizz)
 
@@ -208,15 +261,22 @@ class Step(Screen):
 
     def __init__(self, **kwargs):
         super(Step, self).__init__(**kwargs)
-        Clock.schedule_interval(self._reduce_timer, 1 / 60.)
 
     def abort(self):
         Clock.unschedule(self._reduce_timer)
 
+    def on_enter(self):
+        Clock.schedule_interval(self._reduce_timer, 1 / 60.)
+        app.play('TIME_sans_5sec')
+
     def _reduce_timer(self, dt):
+        global app
         self.timer -= 1 / 60.
         if self.timer <= 10 and not self.do_replay:
             self.do_replay = True
+            app.play('TIME_sans_5sec')
+            app.play('5sec')
+
         if self.do_replay:
             t = int((10 - self.timer) * 10)
             app = App.get_running_app()
@@ -232,6 +292,7 @@ class Step(Screen):
             self.dispatch('on_step_done')
 
     def on_step_done(self, go_next=True):
+        self.analyse_stats()
         self.done = True
         Clock.unschedule(self._reduce_timer)
         if go_next:
@@ -281,7 +342,8 @@ class Step(Screen):
         self.scale1, self.scale2, self.scale3, self.scale4 = scales
 
     def add_touch(self, touch):
-        self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch))
+        self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch,
+            stat_influence=self.do_replay))
 
     def remove_touch(self, touch):
         for child in self.ids.content.children[:]:
@@ -290,6 +352,12 @@ class Step(Screen):
             if child.touch is touch:
                 self.ids.content.remove_widget(child)
                 return
+
+    def analyse_stats(self):
+        for touch in self.ids.content.children[:]:
+            if not isinstance(touch, Touch):
+                continue
+            
 
 class EndStep(Step):
 
@@ -302,6 +370,7 @@ class EndStep(Step):
         self.show_answer()
 
     def show_answer(self):
+        app.play('END')
         if self.answers:
             img = self.answers[0]
         else:
@@ -309,7 +378,7 @@ class EndStep(Step):
         self.answer_desc = AnswerDescription(
             title=self.title,
             description=self.description,
-            img=img)
+            img=img or '')
         self.answer_details = AnswerDetails(
             order_user=(self.img1, self.img2, self.img3, self.img4),
             order_all=(self.img3, self.img2, self.img1, self.img4))
@@ -344,6 +413,7 @@ class ListQuizzItem(GridLayout):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             if self.selected:
+                app.play('CLIC_normal')
                 self.listquizz.start(self)
             else:
                 self.listquizz.unselect()
@@ -378,16 +448,25 @@ class ListQuizz(Screen):
         App.get_running_app().start_quizz(item.fn)
 
 
+class LoadingScreen(Screen):
+    pass
 
 class Prejudice(App):
 
     def build(self):
+        global app
+        app = self
+        self.sounds = {}
         self.current_step = None
         self.sm = ScreenManager(transition=SlideTransition(
             direction='left', duration=.4))
 
+        self.sm.add_widget(LoadingScreen(name='loading'))
         self.sm.add_widget(Home(name='home'))
 
+        self.sm.current = 'home'
+
+        app.play('ACCUEIL')
         return self.sm
 
     def stop_quizz(self):
@@ -421,16 +500,19 @@ class Prejudice(App):
             description=data['description'],
             answers=[t(x['source']) for x in data['answers']])
 
-        # FIX SELECTION ALGO
-        indices = data['indices'][:4]
-        step = partial(EndStep,
-            baseimg=t(data['main_image']),
-            img1=t(indices[0]['source']),
-            img2=t(indices[1]['source']),
-            img3=t(indices[2]['source']),
-            img4=t(indices[3]['source']),
-            **kwargs)
-        self.steps.append(step)
+        index_max = len(data['steps']) - 1
+        for index, indices in enumerate(data['steps']):
+            if not indices:
+                continue
+            cls = Step if index != index_max else EndStep
+            step = partial(cls,
+                baseimg=t(data['main_image']),
+                img1=t(indices[0]['source']),
+                img2=t(indices[1]['source']),
+                img3=t(indices[2]['source']),
+                img4=t(indices[3]['source']),
+                **kwargs)
+            self.steps.append(step)
 
         self.count = 0
         self.stepindex = -1
@@ -520,9 +602,10 @@ class Prejudice(App):
 
         # save all the images
         self._copy_quizz_image(quizz_dir, quizz, 'main_image')
-        for indice in quizz['indices']:
-            if indice['source']:
-                self._copy_quizz_image(quizz_dir, indice, 'source')
+        for indices in quizz['steps']:
+            for indice in indices:
+                if indice['source']:
+                    self._copy_quizz_image(quizz_dir, indice, 'source')
         for answer in quizz['answers']:
             if answer['source']:
                 self._copy_quizz_image(quizz_dir, answer, 'source')
@@ -557,14 +640,25 @@ class Prejudice(App):
             if not exists(dest_fn):
                 break
             index += 1
-        shutil.copy(data[key], dest_fn)
+        shutil.copyfile(data[key], dest_fn)
         data[key] = basename(dest_fn)
 
 
     def message(self, msg):
         AppPopup(message=msg).open()
 
+    def play(self, name):
+        if name not in self.sounds:
+            fn = join('data', 'sounds', '{}.wav'.format(name))
+            self.sounds[name] = SoundLoader.load(fn)
 
+        sound = self.sounds[name]
+        if sound.state == 'play':
+            sound.stop()
+        sound.play()
+
+    def add_stat(self, good, influence):
+        pass
 
 
 if __name__ == '__main__':

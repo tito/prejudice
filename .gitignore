@@ -1,0 +1,5 @@
+*.swp
+.buildozer
+.state
+bin/*
+*.pyc
