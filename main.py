@@ -1,6 +1,6 @@
 #: -*- coding: utf-8 -*-
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 from kivy.app import App
 from kivy.properties import StringProperty, ListProperty, \
@@ -80,6 +80,10 @@ class AddQuizz(Screen):
     step_current_index = NumericProperty(1)
     def abort(self):
         pass
+
+    def on_leave(self):
+        app.sm.remove_widget(self)
+        print 'removed, and should be destroyed.'
 
     def add_step(self):
         self.step_current_index += 1
@@ -249,6 +253,7 @@ class Step(Screen):
     do_replay = BooleanProperty(False)
     last_index = NumericProperty(0)
     done = BooleanProperty(False)
+    indices = ListProperty()
 
     def _get_remaining_count(self):
         return MAX_CHOICES - len(self.choices)
@@ -304,7 +309,7 @@ class Step(Screen):
 
         app = App.get_running_app()
         t = int((20 - self.timer) * 10)
-        self.choices.append([touch, index])
+        self.choices.append([touch, index, self.do_replay])
         self.add_touch(touch)
 
         # new
@@ -315,7 +320,7 @@ class Step(Screen):
 
         # prev
         if len(self.choices) > MAX_CHOICES:
-            last_touch, index = self.choices.pop(0)
+            last_touch, index, _ = self.choices.pop(0)
             self.remove_touch(last_touch)
             attr = 'choice{}'.format(index)
             setattr(self, attr, getattr(self, attr) - 1)
@@ -342,8 +347,7 @@ class Step(Screen):
         self.scale1, self.scale2, self.scale3, self.scale4 = scales
 
     def add_touch(self, touch):
-        self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch,
-            stat_influence=self.do_replay))
+        self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch))
 
     def remove_touch(self, touch):
         for child in self.ids.content.children[:]:
@@ -354,10 +358,10 @@ class Step(Screen):
                 return
 
     def analyse_stats(self):
-        for touch in self.ids.content.children[:]:
-            if not isinstance(touch, Touch):
-                continue
-            
+        for touch, index, influence in self.choices:
+            good = self.indices[index - 1]['is_answer']
+            app.add_stat(good, influence)
+
 
 class EndStep(Step):
 
@@ -451,12 +455,68 @@ class ListQuizz(Screen):
 class LoadingScreen(Screen):
     pass
 
+
+class StatsScreen(Screen):
+    good_count = NumericProperty(0)
+    bad_count = NumericProperty(0)
+    good_percent = NumericProperty(0)
+    bad_percent = NumericProperty(0)
+    good_inf_percent = NumericProperty(0)
+    bad_inf_percent = NumericProperty(0)
+    pattern_good = ObjectProperty()
+    pattern_bad = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(StatsScreen, self).__init__(**kwargs)
+        self.pattern_good = Image(source='data/stats-pattern-good.png').texture
+        self.pattern_good.wrap = 'repeat'
+        self.pattern_bad = Image(source='data/stats-pattern-bad.png').texture
+        self.pattern_bad.wrap = 'repeat'
+
+    def on_enter(self):
+        self.update()
+
+    def on_pre_enter(self):
+        self.good_percent = self.bad_percent = \
+            self.good_inf_percent = self.bad_inf_percent = \
+            self.good_count = self.bad_count = 0
+
+    def update(self):
+        good_count = sum(app.stats['good'])
+        bad_count = sum(app.stats['bad'])
+        count = good_count + bad_count
+        if not count:
+            return
+
+        good_percent = good_count / float(count)
+        bad_percent = bad_count / float(count)
+
+        good_inf_percent = 0
+        if good_count:
+            good_inf_percent = app.stats['good'][1] / float(good_count)
+
+        bad_inf_percent = 0
+        if bad_count:
+            bad_inf_percent = app.stats['bad'][1] / float(bad_count)
+
+        ratio = 1 / max(good_percent, bad_percent)
+        good_percent *= ratio
+        bad_percent *= ratio
+
+        Animation(good_percent=good_percent, bad_percent=bad_percent,
+                good_count=good_count, bad_count=bad_count,
+                good_inf_percent=good_inf_percent,
+                bad_inf_percent=bad_inf_percent,
+                d=1., t='out_quart').start(self)
+
+
 class Prejudice(App):
 
     def build(self):
         global app
         app = self
         self.sounds = {}
+        self.load_stats()
         self.current_step = None
         self.sm = ScreenManager(transition=SlideTransition(
             direction='left', duration=.4))
@@ -469,11 +529,19 @@ class Prejudice(App):
         app.play('ACCUEIL')
         return self.sm
 
+    def show_stats(self):
+        if not hasattr(self, '_statsscr'):
+            self._statsscr = StatsScreen(name='stats')
+            self.sm.add_widget(self._statsscr)
+        self.sm.transition.direction = 'left'
+        self.sm.current = 'stats'
+
     def stop_quizz(self):
         if self.current_step:
             self.current_step.abort()
             self.sm.remove_widget(self.current_step)
             self.current_step = None
+        self.sm.transition.direction = 'right'
         self.sm.current = 'home'
 
     def list_quizz(self):
@@ -481,6 +549,7 @@ class Prejudice(App):
             self._listquizz = ListQuizz(name='list-quizz')
             self.sm.add_widget(self._listquizz)
         self._listquizz.update()
+        self.sm.transition.direction = 'left'
         self.sm.current = 'list-quizz'
 
     def start_quizz(self, quizz):
@@ -511,6 +580,7 @@ class Prejudice(App):
                 img2=t(indices[1]['source']),
                 img3=t(indices[2]['source']),
                 img4=t(indices[3]['source']),
+                indices=indices,
                 **kwargs)
             self.steps.append(step)
 
@@ -530,8 +600,8 @@ class Prejudice(App):
         self.do_next_step()
 
     def add_quizz(self):
-        self.current_step = AddQuizz(name='add-quizz')
-        self.sm.add_widget(self.current_step)
+        self.sm.add_widget(AddQuizz(name='add-quizz'))
+        self.sm.transition.direction = 'left'
         self.sm.current = 'add-quizz'
 
     def do_next_step(self):
@@ -657,8 +727,29 @@ class Prejudice(App):
             sound.stop()
         sound.play()
 
+
+    @property
+    def stats_fn(self):
+        return join(self.user_data_dir, 'stats.json')
+
+    def load_stats(self):
+        self.stats = { 'good': [0, 0], 'bad': [0, 0] }
+        try:
+            if exists(self.stats_fn):
+                with open(self.stats_fn) as fd:
+                    self.stats = json.load(fd)
+        except:
+            pass
+
+    def save_stats(self):
+        with open(self.stats_fn, 'wb') as fd:
+            json.dump(self.stats, fd)
+
     def add_stat(self, good, influence):
-        pass
+        key = 'good' if good else 'bad'
+        index = 1 if influence else 0
+        self.stats[key][index] += 1
+        self.save_stats()
 
 
 if __name__ == '__main__':

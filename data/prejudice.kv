@@ -275,49 +275,6 @@
                     size_hint: None, None
 
 
-
-<Step1@Step>:
-    sid: '1'
-    baseimg: 'bouchon/bouchon.jpg'
-    img1: 'bouchon/picto1_chemise.png'
-    img2: 'bouchon/picto1_lac.png'
-    img3: 'bouchon/picto1_pocket.png'
-    img4: 'bouchon/picto1_voiture.png'
-
-<Step2@Step>:
-    sid: '2'
-    baseimg: 'bouchon/bouchon.jpg'
-    img1: 'bouchon/picto2_fish.png'
-    img2: 'bouchon/picto2_leviervitesse.png'
-    img3: 'bouchon/picto2_trombonne.png'
-    img4: 'bouchon/picto2_zipper.png'
-
-<Step3End@Screen>:
-    BoxLayout:
-        orientation: 'vertical'
-        BoxLayout:
-            orientation: 'horizontal'
-            BoxLayout:
-                orientation: 'vertical'
-                Image:
-                    source: 'bouchon/answer.png'
-                Label:
-                    size_hint_y: None
-                    height: '48dp'
-                    text: 'Cet objet est un tire-bouton'
-
-            Image:
-                source: 'bouchon/dataviz.jpg'
-
-        AnchorLayout:
-            size_hint_y: .1
-            Button:
-                text: 'Recommencer'
-                size_hint: None, None
-                size: '200dp', '48dp'
-                on_release: app.start_quizz()
-
-
 <-HomeButton@Button>:
     background_color: color_red if self.state == 'normal' else color_white
     color: color_red if self.state != 'normal' else color_white
@@ -427,6 +384,7 @@
 
             HomeButton:
                 text: 'STATISTIQUES PERSONNELS'
+				on_release: app.show_stats()
                 background_normal: 'data/icons/picto_stats2.png'
                 background_down: 'data/icons/picto_stats.png'
 
@@ -1053,3 +1011,260 @@
 					source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
 					size: '20sp', '20sp'
 					size_hint: None, None
+
+
+<StatsScreen>:
+    canvas.before:
+        Color:
+            rgba: color_gray
+        Rectangle:
+            size: self.size
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        # real toolbar, above everything
+        BoxLayout:
+            size_hint_y: None
+            height: '48dp'
+
+            canvas.before:
+                Color:
+                    rgba: color_red
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Image:
+                source: 'data/logo.png'
+                size_hint_x: None
+                width: self.height * self.image_ratio
+
+            Label:
+                text: 'Apriori'
+                font_size: '24dp'
+                font_name: 'data/fonts/PTN57F.ttf'
+                color: color_white
+                size_hint_x: None
+                width: self.texture_size[0] + sp(20)
+
+            Widget
+
+            Button:
+                id: btn
+                background_normal: ''
+                background_down: ''
+                background_color: 0, 0, 0, 0
+                size_hint_x: None
+                width: self.height
+                on_release: app.stop_quizz()
+                AnchorLayout:
+                    pos: btn.pos
+                    size: btn.size
+                    Image:
+                        source: 'data/icons/picto_croix{}.png'.format('2' if btn.state == 'normal' else '')
+                        size: '20sp', '20sp'
+                        size_hint: None, None
+
+		GridLayout:
+			cols: 1
+
+			AnchorLayout:
+				size_hint_y: None
+				height: '48sp'
+
+				Label:
+					text: 'VOS STATISTIQUES'
+					font_name: 'data/fonts/PTN77F.ttf'
+					font_size:  '20sp'
+
+			GridLayout:
+				cols: 2
+				spacing: '30sp'
+				padding: '40sp', '20sp'
+
+				# GOOD
+				AnchorLayout:
+					GridLayout:
+						cols: 1
+
+						Widget:
+							canvas.before:
+								Color:
+									rgba: color_blue
+								Rectangle:
+									pos: self.pos
+									size: self.width, self.height * root.good_percent
+								Color:
+									rgba: color_white
+								Rectangle:
+									source: 'data/stats-flag-good.png'
+									pos: self.x - sp(25), self.y + (self.height * ((root.good_percent - root.good_percent * root.good_inf_percent) / 2. + root.good_percent * root.good_inf_percent)) - sp(9)
+									size: sp(25), sp(18)
+								Rectangle:
+									source: 'data/stats-flag-goodinf.png'
+									pos: self.x - sp(25), self.y + (self.height * root.good_percent * root.good_inf_percent) / 2. - sp(9)
+									size: sp(25), sp(18)
+								Rectangle:
+									texture: root.pattern_good
+									pos: self.pos
+									size: self.width, self.height * root.good_percent * root.good_inf_percent
+									tex_coords: (0, 0, self.width / 6., 0, self.width / 6., self.height  * root.good_percent * root.good_inf_percent / 6., 0, self.height  * root.good_percent * root.good_inf_percent / 6.)
+								Line:
+									rectangle: self.x, self.y, self.width, self.height * root.good_percent
+
+								Line:
+									rectangle: self.x, self.y, self.width, self.height * root.good_percent * root.good_inf_percent
+
+						AnchorLayout:
+							size_hint_y: None
+							height: '90sp'
+							GridLayout:
+								rows: 1
+								padding: '10sp'
+								size_hint_x: None
+								width: self.minimum_width
+								Label:
+									text: '{}'.format(int(root.good_count))
+									color: color_blue
+									font_size: '60sp'
+									font_name: 'data/fonts/PTN77F.ttf'
+									size_hint: None, None
+									size: self.texture_size
+
+								Image:
+									source: 'data/stats-good.png'
+									size_hint: None, None
+									size: self.texture_size[0] + sp(20), self.texture_size[1]
+
+								Label:
+									text: 'réponses\njustes'
+									color: color_blue
+									font_size: '30sp'
+									size_hint: None, None
+									size: self.texture_size
+									font_name: 'data/fonts/PTS56F.ttf'
+
+						Label:
+							text: 'dont'
+							size_hint_y: None
+							height: '20sp'
+							canvas.before:
+								Color:
+									rgba: color_white
+								Line:
+									points: [self.x, self.center_y - 2, self.center_x - self.texture_size[0] / 2. - sp(10), self.center_y - 2]
+								Line:
+									points: [self.center_x + self.texture_size[0] / 2. + sp(10), self.center_y - 2, self.right, self.center_y - 2]
+								Rectangle:
+									pos: self.x, self.center_y + 2
+									size: self.width / 2. - self.texture_size[0] / 2. - sp(10), 3
+								Rectangle:
+									pos: self.right, self.center_y + 2
+									size: -(self.width / 2. - self.texture_size[0] / 2. - sp(10)), 3
+
+						Label:
+							text: '{:02d}%'.format(int(root.good_inf_percent * 100))
+							font_size: '80sp'
+							font_name: 'data/fonts/PTN77F.ttf'
+							size_hint_y: None
+							height: self.texture_size[1]
+						Label:
+							text: 'de réponses justes influencées'
+							font_size: '18sp'
+							font_name: 'data/fonts/PTS56F.ttf'
+							size_hint_y: None
+							height: self.texture_size[1]
+
+				# BAD
+				AnchorLayout:
+					GridLayout:
+						cols: 1
+
+						Widget:
+							canvas.before:
+								Color:
+									rgba: color_red
+								Rectangle:
+									pos: self.pos
+									size: self.width, self.height * root.bad_percent
+								Color:
+									rgba: color_white
+								Rectangle:
+									source: 'data/stats-flag-bad.png'
+									pos: self.right, self.y + (self.height * ((root.bad_percent - root.bad_percent * root.bad_inf_percent) / 2. + root.bad_percent * root.bad_inf_percent)) - sp(9)
+									size: sp(25), sp(18)
+								Rectangle:
+									source: 'data/stats-flag-badinf.png'
+									pos: self.right, self.y + (self.height * root.bad_percent * root.bad_inf_percent) / 2. - sp(9)
+									size: sp(25), sp(18)
+								Rectangle:
+									texture: root.pattern_bad
+									pos: self.pos
+									size: self.width, self.height * root.bad_percent * root.bad_inf_percent
+									tex_coords: (0, 0, self.width / 6., 0, self.width / 6., self.height  * root.bad_percent * root.bad_inf_percent / 6., 0, self.height  * root.bad_percent * root.bad_inf_percent / 6.)
+								Line:
+									rectangle: self.x, self.y, self.width, self.height * root.bad_percent
+
+								Line:
+									rectangle: self.x, self.y, self.width, self.height * root.bad_percent * root.bad_inf_percent
+
+						AnchorLayout:
+							size_hint_y: None
+							height: '90sp'
+							GridLayout:
+								rows: 1
+								padding: '10sp'
+								size_hint_x: None
+								width: self.minimum_width
+								Label:
+									text: '{}'.format(int(root.bad_count))
+									color: color_red
+									font_size: '60sp'
+									font_name: 'data/fonts/PTN77F.ttf'
+									size_hint: None, None
+									size: self.texture_size
+
+								Image:
+									source: 'data/stats-bad.png'
+									size_hint: None, None
+									size: self.texture_size[0] + sp(20), self.texture_size[1]
+
+								Label:
+									text: 'réponses\nfausses'
+									color: color_red
+									font_size: '30sp'
+									size_hint: None, None
+									size: self.texture_size
+									font_name: 'data/fonts/PTS56F.ttf'
+
+						Label:
+							text: 'dont'
+							size_hint_y: None
+							height: '20sp'
+							canvas.before:
+								Color:
+									rgba: color_white
+								Line:
+									points: [self.x, self.center_y - 2, self.center_x - self.texture_size[0] / 2. - sp(10), self.center_y - 2]
+								Line:
+									points: [self.center_x + self.texture_size[0] / 2. + sp(10), self.center_y - 2, self.right, self.center_y - 2]
+								Rectangle:
+									pos: self.x, self.center_y + 2
+									size: self.width / 2. - self.texture_size[0] / 2. - sp(10), 3
+								Rectangle:
+									pos: self.right, self.center_y + 2
+									size: -(self.width / 2. - self.texture_size[0] / 2. - sp(10)), 3
+
+						Label:
+							text: '{:02d}%'.format(int(root.bad_inf_percent * 100))
+							font_size: '80sp'
+							font_name: 'data/fonts/PTN77F.ttf'
+							size_hint_y: None
+							height: self.texture_size[1]
+						Label:
+							text: 'de réponses fausses influencées'
+							font_size: '18sp'
+							font_name: 'data/fonts/PTS56F.ttf'
+							size_hint_y: None
+							height: self.texture_size[1]
