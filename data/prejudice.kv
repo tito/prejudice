@@ -53,7 +53,7 @@
             pos: self.x - dp(15), self.y - dp(15)
             size: dp(30), dp(30)
         Color:
-            rgba: color_red
+            rgba: color_blue if self.is_other else color_red
         Ellipse:
             pos: self.x - dp(13), self.y - dp(13)
             size: dp(26), dp(26)
@@ -65,12 +65,20 @@
     background_normal: ''
     background_down: ''
 
-    Image:
-        size: root.width * root.scale, root.height * root.scale
-        x: root.center_x - self.width / 2.
-        y: root.center_y - self.height / 2.
-        source: root.source
+	CropCenterImage:
+		source: root.source
+		opacity: int(bool(root.source))
+		pos: root.pos
+		size: root.size
 
+	Label:
+		opacity: int(bool(root.title))
+		pos: root.pos
+		size: root.size
+		text: root.title
+		font_size: '30sp'
+		text_size: self.width - sp(10), None
+		halign: 'center'
 
 <StartStep@Screen>:
     BoxLayout:
@@ -203,32 +211,33 @@
                     orientation: 'horizontal'
                         
                     GridLayout:
+						id: choices
                         cols: 2
                         spacing: '10dp'
 
                         ButtonChoice:
                             index: 1
                             step: root
-                            source: root.img1
-                            scale: root.scale1
+                            source: root.indices[0]['source']
+                            title: root.indices[0]['title']
 
                         ButtonChoice:
                             index: 2
                             step: root
-                            source: root.img2
-                            scale: root.scale2
+                            source: root.indices[1]['source']
+                            title: root.indices[1]['title']
 
                         ButtonChoice:
                             index: 3
                             step: root
-                            source: root.img3
-                            scale: root.scale3
+                            source: root.indices[2]['source']
+                            title: root.indices[2]['title']
 
                         ButtonChoice:
                             index: 4
                             step: root
-                            source: root.img4
-                            scale: root.scale4
+                            source: root.indices[3]['source']
+                            title: root.indices[3]['title']
 
     # real toolbar, above everything
     BoxLayout:

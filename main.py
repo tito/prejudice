@@ -1,8 +1,24 @@
 #: -*- coding: utf-8 -*-
+'''
+A Priori
+========
+
+.. author:: Mathieu Virbel <mat@meltingrocks.com
+'''
 
 __version__ = '0.2'
 
+import kivy
+kivy.require('1.7.2')
+
+import os
+import json
+import shutil
+import sys
+from math import ceil
+from random import random
 from kivy.app import App
+from kivy.metrics import dp
 from kivy.properties import StringProperty, ListProperty, \
         NumericProperty, ObjectProperty, BooleanProperty, \
         AliasProperty
@@ -21,10 +37,6 @@ from kivy.animation import Animation
 from kivy.uix.popup import Popup
 from kivy.utils import platform
 from functools import partial
-import os
-import json
-import shutil
-import sys
 
 sys.path += ['libs']
 app = None
@@ -193,6 +205,7 @@ class CropCenterImage(Image):
 
 class Touch(Widget):
     touch = ObjectProperty()
+    is_other = BooleanProperty(False)
 
 class TouchCounter(Widget):
     count = NumericProperty(MAX_CHOICES)
@@ -213,8 +226,8 @@ class ButtonChoice(Button):
     index = NumericProperty()
     step = ObjectProperty()
     source = StringProperty()
-    scale = NumericProperty(.5)
     last_touch = ObjectProperty()
+    title = StringProperty()
 
     def on_touch_down(self, touch):
         self.last_touch = touch
@@ -232,28 +245,17 @@ class AnswerDetails(RelativeLayout):
 class Step(Screen):
     sid = StringProperty()
     baseimg = StringProperty()
-    img1 = StringProperty()
-    img2 = StringProperty()
-    img3 = StringProperty()
-    img4 = StringProperty()
-    rchoice1 = NumericProperty(0)
-    rchoice2 = NumericProperty(0)
-    rchoice3 = NumericProperty(0)
-    rchoice4 = NumericProperty(0)
-    scale1 = NumericProperty(.5)
-    scale2 = NumericProperty(.5)
-    scale3 = NumericProperty(.5)
-    scale4 = NumericProperty(.5)
-    choice1 = NumericProperty(0)
-    choice2 = NumericProperty(0)
-    choice3 = NumericProperty(0)
-    choice4 = NumericProperty(0)
     choices = ListProperty([])
     timer = NumericProperty(20)
     do_replay = BooleanProperty(False)
     last_index = NumericProperty(0)
     done = BooleanProperty(False)
     indices = ListProperty()
+
+    choice1 = NumericProperty()
+    choice2 = NumericProperty()
+    choice3 = NumericProperty()
+    choice4 = NumericProperty()
 
     def _get_remaining_count(self):
         return MAX_CHOICES - len(self.choices)
@@ -265,6 +267,7 @@ class Step(Screen):
     __events__ = ('on_step_done', )
 
     def __init__(self, **kwargs):
+        self.indices = kwargs.pop('indices')
         super(Step, self).__init__(**kwargs)
 
     def abort(self):
@@ -275,24 +278,14 @@ class Step(Screen):
         app.play('TIME_sans_5sec')
 
     def _reduce_timer(self, dt):
-        global app
         self.timer -= 1 / 60.
         if self.timer <= 10 and not self.do_replay:
             self.do_replay = True
             app.play('TIME_sans_5sec')
             app.play('5sec')
 
-        if self.do_replay:
-            t = int((10 - self.timer) * 10)
-            app = App.get_running_app()
-            events = list(app.get_events(self.sid, self.last_index, t))
-            for action, index in events:
-                name = 'rchoice{}'.format(index)
-                acc = 1 if action == 'add' else -1
-                setattr(self, name, getattr(self, name) + acc)
-            self.last_index = t
-            if events:
-                self.adjust_scales()
+            self.generate_other_choices()
+
         if self.timer <= 0:
             self.dispatch('on_step_done')
 
@@ -303,20 +296,28 @@ class Step(Screen):
         if go_next:
             App.get_running_app().do_next_step()
 
+    def generate_other_choices(self):
+        choices = app.get_choices()
+        print choices
+        m = dp(30)
+        for index, choice in enumerate(choices):
+            for count in xrange(choice):
+                widget = list(reversed(self.ids.choices.children))[index]
+                x = random() * (widget.width - m * 2) + widget.x + m
+                y = random() * (widget.height - m * 2) + widget.y + m
+                touch = Touch(pos=(x, y), is_other=True)
+                self.ids.content.add_widget(touch)
+
     def choice(self, index, touch):
         if self.done:
             return
 
-        app = App.get_running_app()
-        t = int((20 - self.timer) * 10)
         self.choices.append([touch, index, self.do_replay])
         self.add_touch(touch)
 
         # new
         attr = 'choice{}'.format(index)
         setattr(self, attr, getattr(self, attr) + 1)
-        if not self.do_replay:
-            app.add_event(self.sid, t, index, touch.pos)
 
         # prev
         if len(self.choices) > MAX_CHOICES:
@@ -324,27 +325,6 @@ class Step(Screen):
             self.remove_touch(last_touch)
             attr = 'choice{}'.format(index)
             setattr(self, attr, getattr(self, attr) - 1)
-            if not self.do_replay:
-                app.del_event(self.sid, t, index, touch.pos)
-
-        self.adjust_scales()
-
-    def adjust_scales(self):
-        # adjust scales
-        choices = [self.choice1 + self.rchoice1, self.choice2 + self.rchoice2,
-                self.choice3 + self.rchoice3, self.choice4 + self.rchoice4]
-        scales = [.5, .5, .5, .5]
-        step = .005
-        for index in range(4):
-            acc = step * choices[index]
-            for index2 in range(4):
-                if index == index2:
-                    scales[index] -= acc
-                else:
-                    scales[index] += acc
-
-        # apply
-        self.scale1, self.scale2, self.scale3, self.scale4 = scales
 
     def add_touch(self, touch):
         self.ids.content.add_widget(Touch(pos=touch.pos, touch=touch))
@@ -361,6 +341,7 @@ class Step(Screen):
         for touch, index, influence in self.choices:
             good = self.indices[index - 1]['is_answer']
             app.add_stat(good, influence)
+            app.update_choices(index)
 
 
 class EndStep(Step):
@@ -371,6 +352,7 @@ class EndStep(Step):
 
     def on_step_done(self):
         super(EndStep, self).on_step_done(False)
+        app.save_choices()
         self.show_answer()
 
     def show_answer(self):
@@ -383,26 +365,25 @@ class EndStep(Step):
             title=self.title,
             description=self.description,
             img=img or '')
-        self.answer_details = AnswerDetails(
-            order_user=(self.img1, self.img2, self.img3, self.img4),
-            order_all=(self.img3, self.img2, self.img1, self.img4))
+        #self.answer_details = AnswerDetails(
+        #    order_user=(self.img1, self.img2, self.img3, self.img4),
+        #    order_all=(self.img3, self.img2, self.img1, self.img4))
         Clock.schedule_once(self.animate_answer, 0)
         self.ids.content.add_widget(self.answer_desc)
-        self.ids.content.add_widget(self.answer_details)
+        #self.ids.content.add_widget(self.answer_details)
 
     def animate_answer(self, *args):
-        height = self.answer_details.height
+        height = 0
+        #height = self.answer_details.height
         self.answer_desc.y = self.height
-        self.answer_details.top = 0
+        #self.answer_details.top = 0
 
         from kivy.metrics import dp
         self.answer_desc.height = self.height - height - dp(48)
 
         from kivy.animation import Animation
-        Animation(y=height,
-                t='out_quart').start(self.answer_desc)
-        Animation(y=0.,
-                t='out_quart').start(self.answer_details)
+        Animation(y=height, t='out_quart').start(self.answer_desc)
+        #Animation(y=0., t='out_quart').start(self.answer_details)
 
 class Home(Screen):
     pass
@@ -558,6 +539,8 @@ class Prejudice(App):
         if not self.current_quizz:
             return
 
+        self.load_choices()
+
         # create steps
         def t(f):
             return join(dirname(quizz), f)
@@ -576,10 +559,6 @@ class Prejudice(App):
             cls = Step if index != index_max else EndStep
             step = partial(cls,
                 baseimg=t(data['main_image']),
-                img1=t(indices[0]['source']),
-                img2=t(indices[1]['source']),
-                img3=t(indices[2]['source']),
-                img4=t(indices[3]['source']),
                 indices=indices,
                 **kwargs)
             self.steps.append(step)
@@ -613,6 +592,7 @@ class Prejudice(App):
         self.sm.add_widget(step)
         self.sm.current = name
 
+    '''
     def add_event(self, step, t, index, pos):
         if step not in self.events:
             self.events[step] = []
@@ -652,8 +632,11 @@ class Prejudice(App):
             if start <= t < stop:
                 yield action, index
 
-    def on_pause(self):
-        return True
+    '''
+
+    #
+    # Quizz management
+    #
 
     @property
     def quizz_dir(self):
@@ -713,6 +696,12 @@ class Prejudice(App):
         shutil.copyfile(data[key], dest_fn)
         data[key] = basename(dest_fn)
 
+    #
+    # Utils
+    #
+
+    def on_pause(self):
+        return True
 
     def message(self, msg):
         AppPopup(message=msg).open()
@@ -727,6 +716,9 @@ class Prejudice(App):
             sound.stop()
         sound.play()
 
+    #
+    # Statistics management
+    #
 
     @property
     def stats_fn(self):
@@ -750,6 +742,45 @@ class Prejudice(App):
         index = 1 if influence else 0
         self.stats[key][index] += 1
         self.save_stats()
+
+
+    #
+    # Events
+    #
+
+    @property
+    def choice_fn(self):
+        return join(dirname(self.current_quizz_fn), 'choices.json')
+
+    def load_choices(self):
+        self.choices = {}
+        try:
+            if exists(self.choice_fn):
+                with open(self.choice_fn) as fd:
+                    self.choices = json.load(fd)
+        except:
+            pass
+        print self.choices
+
+    def update_choices(self, index):
+        index = str(index)
+        if index not in self.choices:
+            self.choices[index] = 0
+        self.choices[index] += 1
+
+    def save_choices(self):
+        with open(self.choice_fn, 'wb') as fd:
+            json.dump(self.choices, fd)
+
+    def get_choices(self):
+        count = sum(self.choices.values()) / 5.
+        if count <= 1:
+            return (0, 0, 0, 0)
+        return (
+            int(ceil(self.choices.get('1', 0) / float(count))),
+            int(ceil(self.choices.get('2', 0) / float(count))),
+            int(ceil(self.choices.get('3', 0) / float(count))),
+            int(ceil(self.choices.get('4', 0) / float(count))))
 
 
 if __name__ == '__main__':
