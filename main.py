@@ -31,7 +31,7 @@ from kivy.clock import Clock
 from libs.pictureimporter import PictureImporter
 from kivy.uix.gridlayout import GridLayout
 from kivy.core.audio import SoundLoader
-from os.path import join, exists, dirname, basename
+from os.path import join, exists, dirname, basename, realpath
 from kivy.uix.stencilview import StencilView
 from kivy.animation import Animation
 from kivy.uix.popup import Popup
@@ -184,6 +184,10 @@ class CropCenterImage(Image):
 
     # redefine norm_image_size to implement a "crop center" approach
     # XXX move that into kivy.uix.image itself, with a new "allow_crop" property
+
+    def __init__(self, **kwargs):
+        kwargs['nocache'] = True
+        super(CropCenterImage, self).__init__(**kwargs)
 
     def get_norm_image_size(self):
         if not self.texture:
@@ -358,7 +362,7 @@ class EndStep(Step):
     def show_answer(self):
         app.play('END')
         if self.answers:
-            img = self.answers[0]
+            img = self.answers[0]['source']
         else:
             img = None
         self.answer_desc = AnswerDescription(
@@ -493,6 +497,8 @@ class StatsScreen(Screen):
 
 class Prejudice(App):
 
+    icon = 'data/icon.png'
+
     def build(self):
         global app
         app = self
@@ -542,15 +548,11 @@ class Prejudice(App):
         self.load_choices()
 
         # create steps
-        def t(f):
-            return join(dirname(quizz), f)
-
         self.steps = []
-
         kwargs = dict(
             title=data['title'],
             description=data['description'],
-            answers=[t(x['source']) for x in data['answers']])
+            answers=data['answers'])
 
         index_max = len(data['steps']) - 1
         for index, indices in enumerate(data['steps']):
@@ -558,23 +560,12 @@ class Prejudice(App):
                 continue
             cls = Step if index != index_max else EndStep
             step = partial(cls,
-                baseimg=t(data['main_image']),
+                baseimg=data['main_image'],
                 indices=indices,
                 **kwargs)
             self.steps.append(step)
 
         self.count = 0
-        self.stepindex = -1
-        self.userevents = {}
-        self.events = {}
-        self.events_fn = join(dirname(self.current_quizz_fn), 'result.json')
-        if exists(self.events_fn):
-            try:
-                with open(self.events_fn) as fd:
-                    self.events = json.load(fd)
-            except:
-                pass
-
         self.stepindex = -1
         self.do_next_step()
 
@@ -591,48 +582,6 @@ class Prejudice(App):
         self.current_step = step
         self.sm.add_widget(step)
         self.sm.current = name
-
-    '''
-    def add_event(self, step, t, index, pos):
-        if step not in self.events:
-            self.events[step] = []
-        if step not in self.userevents:
-            self.userevents[step] = []
-        self.events[step].append(('add', t, index, pos))
-        self.userevents[step].append(('add', t, index, pos))
-        self.update_events()
-
-    def del_event(self, step, t, index, pos):
-        if step not in self.events:
-            self.events[step] = []
-        if step not in self.userevents:
-            self.userevents[step] = []
-        self.events[step].append(('del', t, index, pos))
-        self.userevents[step].append(('del', t, index, pos))
-
-    def update_events(self):
-        for step, events in self.events.iteritems():
-            sorted(events, key=lambda x: x[1])
-        for step, events in self.userevents.iteritems():
-            sorted(events, key=lambda x: x[1])
-        with open(self.events_fn, 'w') as fd:
-            json.dump(self.events, fd)
-
-    def get_events(self, step, start, stop):
-        if step not in self.events:
-            return
-        for action, t, index, pos in self.events[step]:
-            if start <= t < stop:
-                yield action, index
-
-    def get_user_events(self, step, start, stop):
-        if step not in self.userevents:
-            return
-        for action, t, index, pos in self.events[step]:
-            if start <= t < stop:
-                yield action, index
-
-    '''
 
     #
     # Quizz management
@@ -681,7 +630,22 @@ class Prejudice(App):
     def load_quizz(self, fn):
         try:
             with open(fn) as fd:
-                return json.load(fd)
+                data = json.load(fd)
+
+            basedir = dirname(realpath(fn))
+            data['main_image'] = join(basedir, data['main_image'])
+            for step in data['steps']:
+                for choice in step:
+                    if not choice['source']:
+                        continue
+                    choice['source'] = join(basedir, choice['source'])
+            for answer in data['answers']:
+                if not answer['source']:
+                    continue
+                answer['source'] = join(basedir, answer['source'])
+
+            return data
+
         except:
             pass
 
