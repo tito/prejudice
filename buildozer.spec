@@ -19,7 +19,7 @@ source.include_exts = py,png,jpg,kv,atlas,ttf,wav
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = quizz
+source.exclude_dirs = quizzs
 
 # (list) List of exclusions using pattern matching
 #source.exclude_patterns = license,images/*/*.jpg
@@ -44,7 +44,7 @@ icon.filename = %(source.dir)s/data/icon.png
 orientation = all
 
 # (bool) Indicate if the application should be fullscreen or not
-fullscreen = 1
+fullscreen = 0
 
 
 #

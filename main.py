@@ -15,6 +15,7 @@ import os
 import json
 import shutil
 import sys
+from time import time
 from math import ceil
 from random import random
 from kivy.app import App
@@ -95,7 +96,6 @@ class AddQuizz(Screen):
 
     def on_leave(self):
         app.sm.remove_widget(self)
-        print 'removed, and should be destroyed.'
 
     def add_step(self):
         self.step_current_index += 1
@@ -240,7 +240,18 @@ class ButtonChoice(Button):
 class AnswerDescription(RelativeLayout):
     title = StringProperty()
     description = StringProperty()
-    img = StringProperty()
+    imgs = ListProperty()
+
+    def __init__(self, **kwargs):
+        super(AnswerDescription, self).__init__(**kwargs)
+        self.create_images()
+
+    def create_images(self):
+        for source in self.imgs:
+            image = Image(source=source)
+            print 'create image', image, image.source
+            self.ids.carousel.add_widget(image)
+
 
 class AnswerDetails(RelativeLayout):
     order_user = ListProperty(['', '', '', ''])
@@ -278,11 +289,15 @@ class Step(Screen):
         Clock.unschedule(self._reduce_timer)
 
     def on_enter(self):
-        Clock.schedule_interval(self._reduce_timer, 1 / 60.)
+        self._starttime = time()
+        Clock.schedule_interval(self._reduce_timer, 1 / 30.)
         app.play('TIME_sans_5sec')
 
+    def on_pre_leave(self):
+        app.stop('TIME_sans_5sec')
+
     def _reduce_timer(self, dt):
-        self.timer -= 1 / 60.
+        self.timer = max(0, 20 - (time() - self._starttime))
         if self.timer <= 10 and not self.do_replay:
             self.do_replay = True
             app.play('TIME_sans_5sec')
@@ -361,14 +376,10 @@ class EndStep(Step):
 
     def show_answer(self):
         app.play('END')
-        if self.answers:
-            img = self.answers[0]['source']
-        else:
-            img = None
         self.answer_desc = AnswerDescription(
             title=self.title,
             description=self.description,
-            img=img or '')
+            imgs=[x['source'] for x in self.answers])
         #self.answer_details = AnswerDetails(
         #    order_user=(self.img1, self.img2, self.img3, self.img4),
         #    order_all=(self.img3, self.img2, self.img1, self.img4))
@@ -401,7 +412,7 @@ class ListQuizzItem(GridLayout):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            if self.selected:
+            if self.selected or True:
                 app.play('CLIC_normal')
                 self.listquizz.start(self)
             else:
@@ -505,6 +516,7 @@ class Prejudice(App):
         self.sounds = {}
         self.load_stats()
         self.current_step = None
+        self.bind_keyboards()
         self.sm = ScreenManager(transition=SlideTransition(
             direction='left', duration=.4))
 
@@ -515,6 +527,16 @@ class Prejudice(App):
 
         app.play('ACCUEIL')
         return self.sm
+
+    def bind_keyboards(self):
+        from kivy.base import EventLoop
+        EventLoop.ensure_window()
+        def on_key_down(window, keycode, *args):
+            if keycode == 27:
+                if self.sm.current != 'home':
+                    self.sm.current = 'home'
+                    return True
+        EventLoop.window.bind(on_key_down=on_key_down)
 
     def show_stats(self):
         if not hasattr(self, '_statsscr'):
@@ -679,6 +701,14 @@ class Prejudice(App):
         if sound.state == 'play':
             sound.stop()
         sound.play()
+
+    def stop(self, name):
+        if name not in self.sounds:
+            return
+        sound = self.sounds[name]
+        if sound.state == 'play':
+            sound.stop()
+
 
     #
     # Statistics management

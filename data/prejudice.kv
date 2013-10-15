@@ -391,7 +391,7 @@
                 background_down: 'data/icons/picto_ajouter.png'
 
             HomeButton:
-                text: 'STATISTIQUES PERSONNELS'
+                text: 'STATISTIQUES PERSONNELLES'
                 on_release: app.show_stats()
                 background_normal: 'data/icons/picto_stats2.png'
                 background_down: 'data/icons/picto_stats.png'
@@ -413,27 +413,58 @@
     BoxLayout:
         orientation: 'vertical'
         padding: '10dp'
+		spacing: '10dp'
 
-        BoxLayout:
-            padding: '10dp'
-            spacing: '10dp'
-            size_hint_y: None
-            height: '96dp'
-
-            Image:
-                allow_stretch: True
-                source: root.img
-                size_hint_x: None
-                width: self.height
-
-            Label:
-                text: root.title
-                font_size: '24sp'
-                font_name: 'data/fonts/PTS56F.ttf'
+		Label:
+			size_hint_y: None
+			text: root.title
+			font_size: '32sp'
+			font_name: 'data/fonts/PTS56F.ttf'
+            text_size: self.width - sp(20), None
+			size_hint_y: None
+			height: self.texture_size[1]
 
         Label:
             text: root.description
-            text_size: self.width + 1, None
+            text_size: self.width - sp(20), None
+			size_hint_y: None
+			height: self.texture_size[1]
+			font_size: '20sp'
+
+		RelativeLayout:
+			Carousel:
+				id: carousel
+			GridLayout:
+				cols: 3
+
+				Button:
+					background_color: 0, 0, 0, 0
+					on_release: carousel.index = max(carousel.index - 1, 0)
+					size_hint_x: None
+					width: img1.texture_size[0] + sp(20)
+					id: btn1
+					Image:
+						id: img1
+						source: 'data/back.png'
+						size_hint_x: None
+						width: self.texture_size[0] + sp(20)
+						opacity: 1 if carousel.index > 0 else 0
+						pos: btn1.pos
+						size: btn1.size
+				Widget
+				Button:
+					background_color: 0, 0, 0, 0
+					on_release: carousel.index = min(carousel.index + 1, len(carousel.slides) - 1)
+					size_hint_x: None
+					width: img1.texture_size[0] + sp(20)
+					id: btn2
+					Image:
+						id: img2
+						source: 'data/next.png'
+						opacity: 1 if carousel.index < len(carousel.slides) - 1 else 0
+						pos: btn2.pos
+						size: btn2.size
+				
 
 <AnswerDetails>:
     canvas:
